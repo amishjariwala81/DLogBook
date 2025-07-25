@@ -1,0 +1,1213 @@
+﻿@page "/Dashboard"
+
+@inject SfDialogService sfDialogService
+@inject NavigationManager Navmanage
+@inject HttpClient Http
+@inject EmailService EmailService
+
+@using CommunityToolkit.Maui.Views
+@using DLogBook.MauiPages
+@using DLogBook.Shared
+@using Newtonsoft.Json
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Popups
+@using System.Data
+@using JSCoreLibRazor
+@using DLogBook.Data
+@using SQLite
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Lists
+@using System.Linq.Expressions
+@using Syncfusion.Blazor.ProgressBar
+@using Syncfusion.Blazor.Spinner
+@using ZXing.Net.Maui
+@using System.Net.Http.Json;
+@using System.Net;
+@using System.Threading.Tasks;
+@using System.Dynamic;
+@using System.Reflection
+@using System.Net.NetworkInformation
+@using System.IO;
+@using System.Text;
+@using DLogBook.Services;
+@using Microsoft.Maui.ApplicationModel.Communication;
+
+<div id="page" class="page page-menu">
+    <header class="header">
+        <div class="site-brand">
+            <img src="/Images/logo.png" />
+        </div>
+        <div class="header-title">
+            <h1>Dashboard</h1>
+        </div>
+
+        <div class="header-icons">
+            @*  <a class="icon" href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M22 17.0022C21.999 19.8731 19.9816 22.2726 17.2872 22.8616L16.6492 20.9476C17.8532 20.7511 18.8765 20.0171 19.4649 19H17C15.8954 19 15 18.1046 15 17V13C15 11.8954 15.8954 11 17 11H19.9381C19.446 7.05369 16.0796 4 12 4C7.92038 4 4.55399 7.05369 4.06189 11H7C8.10457 11 9 11.8954 9 13V17C9 18.1046 8.10457 19 7 19H4C2.89543 19 2 18.1046 2 17V12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12V12.9987V13V17V17.0013V17.0022ZM20 17V13H17V17H20ZM4 13V17H7V13H4Z"></path></svg>
+            </a> *@ 
+            @* 
+            <a class="icon" onclick="@BarcodeScanner">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="24" fill="rgba(255,255,255,1)"><path d="M16 17V16H13V13H16V15H18V17H17V19H15V21H13V18H15V17H16ZM21 21H17V19H19V17H21V21ZM3 3H11V11H3V3ZM5 5V9H9V5H5ZM13 3H21V11H13V3ZM15 5V9H19V5H15ZM3 13H11V21H3V13ZM5 15V19H9V15H5ZM18 13H21V15H18V13ZM6 6H8V8H6V6ZM6 16H8V18H6V16ZM16 6H18V8H16V6Z"></path></svg>
+            </a> *@
+
+            @* <div class="dropdown" style="display:@HideBtn">
+                <a class="icon" data-bs-toggle="dropdown" aria-expanded="false">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="24" fill="rgba(255,255,255,1)"><path d="M16 17V16H13V13H16V15H18V17H17V19H15V21H13V18H15V17H16ZM21 21H17V19H19V17H21V21ZM3 3H11V11H3V3ZM5 5V9H9V5H5ZM13 3H21V11H13V3ZM15 5V9H19V5H15ZM3 13H11V21H3V13ZM5 15V19H9V15H5ZM18 13H21V15H18V13ZM6 6H8V8H6V6ZM6 16H8V18H6V16ZM16 6H18V8H16V6Z"></path></svg>
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                    <li>
+                        <button class="dropdown-item" onclick="@BarcodeScanner" >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="24" fill="currentColor"><path d="M16 17V16H13V13H16V15H18V17H17V19H15V21H13V18H15V17H16ZM21 21H17V19H19V17H21V21ZM3 3H11V11H3V3ZM5 5V9H9V5H5ZM13 3H21V11H13V3ZM15 5V9H19V5H15ZM3 13H11V21H3V13ZM5 15V19H9V15H5ZM18 13H21V15H18V13ZM6 6H8V8H6V6ZM6 16H8V18H6V16ZM16 6H18V8H16V6Z" fill="#14132B"></path></svg>
+                            <span style="margin-left: 10px;">Auto Scan</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="dropdown-item" onclick="@GroupScanner">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="24" fill="currentColor"><path d="M16 17V16H13V13H16V15H18V17H17V19H15V21H13V18H15V17H16ZM21 21H17V19H19V17H21V21ZM3 3H11V11H3V3ZM5 5V9H9V5H5ZM13 3H21V11H13V3ZM15 5V9H19V5H15ZM3 13H11V21H3V13ZM5 15V19H9V15H5ZM18 13H21V15H18V13ZM6 6H8V8H6V6ZM6 16H8V18H6V16ZM16 6H18V8H16V6Z" fill="#14132B"></path></svg>
+                            <span style="margin-left: 10px;">Manual Scan</span>
+                        </button>
+                    </li>
+                </ul>
+            </div> *@
+            <a class="icon" onclick="@ExportDataToFile">
+                @* <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path fill="none" d="M0 0h24v24H0z"></path><path d="M9 2.00318V2H19.9978C20.5513 2 21 2.45531 21 2.9918V21.0082C21 21.556 20.5551 22 20.0066 22H3.9934C3.44476 22 3 21.5501 3 20.9932V8L9 2.00318ZM5.82918 8H9V4.83086L5.82918 8ZM11 4V9C11 9.55228 10.5523 10 10 10H5V20H19V4H11Z"></path></svg> *@
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M21 3C21.5523 3 22 3.44772 22 4V20.0066C22 20.5552 21.5447 21 21.0082 21H2.9918C2.44405 21 2 20.5551 2 20.0066V19H20V7.3L12 14.5L2 5.5V4C2 3.44772 2.44772 3 3 3H21ZM8 15V17H0V15H8ZM5 10V12H0V10H5ZM19.5659 5H4.43414L12 11.8093L19.5659 5Z"></path></svg>
+            </a>
+
+            <a class="icon" onclick="@OpenDialog">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M21 15L15 20.996L4.00221 21C3.4487 21 3 20.5551 3 20.0066V3.9934C3 3.44476 3.44495 3 3.9934 3H20.0066C20.5552 3 21 3.45576 21 4.00247V15ZM19 5H5V19H13V14C13 13.4872 13.386 13.0645 13.8834 13.0067L14 13L19 12.999V5ZM18.171 14.999L15 15V18.169L18.171 14.999Z"></path></svg>
+            </a>
+            @* <a class="icon" onclick="@LogOut">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="24" fill="rgba(255,255,255,1)"><path d="M4 18H6V20H18V4H6V6H4V3C4 2.44772 4.44772 2 5 2H19C19.5523 2 20 2.44772 20 3V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V18ZM6 11H13V13H6V16L1 12L6 8V11Z"></path></svg>
+            </a> *@
+            <a class="icon" href="#" data-bs-toggle="modal" data-bs-target="#exampleModalOne">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M6.26489 3.80698L7.41191 5.44558C5.34875 6.89247 4 9.28873 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 9.28873 18.6512 6.89247 16.5881 5.44558L17.7351 3.80698C20.3141 5.61559 22 8.61091 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 8.61091 3.68594 5.61559 6.26489 3.80698ZM11 12V2H13V12H11Z"></path></svg>
+            </a>
+
+
+            <div class="dropdown">
+                <a class="icon" data-bs-toggle="dropdown" aria-expanded="false">
+                    @* <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M3 4H21V6H3V4ZM3 11H21V13H3V11ZM3 18H21V20H3V18Z"></path></svg> *@
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M12 3C10.9 3 10 3.9 10 5C10 6.1 10.9 7 12 7C13.1 7 14 6.1 14 5C14 3.9 13.1 3 12 3ZM12 17C10.9 17 10 17.9 10 19C10 20.1 10.9 21 12 21C13.1 21 14 20.1 14 19C14 17.9 13.1 17 12 17ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10Z"></path></svg>
+                </a>
+
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                    @* @if (IconVisiblity)
+                    { *@
+                        <li>
+                            @* hidden="@(!((Global.UserName.ToLower()=="jsadmin") || (Global.UserName.ToLower()=="administrator")))" *@
+                            <button class="dropdown-item" onclick="@ImportDeviceData">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20" fill="currentColor"><path d="M3 19H21V21H3V19ZM13 13.1716L19.0711 7.1005L20.4853 8.51472L12 17L3.51472 8.51472L4.92893 7.1005L11 13.1716V2H13V13.1716Z" fill="#14132B"></path></svg>
+                                <span style="margin-left: 10px;">Import Data</span>
+                            </button>
+                        </li>
+                        <li>
+                            @* hidden="@(!((Global.UserName.ToLower() == "jsadmin") || (Global.UserName.ToLower() == "administrator")))" *@
+                            <button class="dropdown-item" onclick="@ExportDeviceData" >
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20" fill="currentColor"><path d="M3 19H21V21H3V19ZM13 5.82843V17H11V5.82843L4.92893 11.8995L3.51472 10.4853L12 2L20.4853 10.4853L19.0711 11.8995L13 5.82843Z"></path></svg>
+                                <span style="margin-left: 10px;">Export Data</span>
+                            </button>
+                        </li>                        
+                   @*  } *@
+                    <li>
+                        <button class="dropdown-item" onclick="@ViewData" hidden="@(!((Global.UserName.ToLower()=="jsadmin") || (Global.UserName.ToLower()=="administrator")))">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20" fill="currentColor"><path d="M14 10H10V14H14V10ZM16 10V14H19V10H16ZM14 19V16H10V19H14ZM16 19H19V16H16V19ZM14 5H10V8H14V5ZM16 5V8H19V5H16ZM8 10H5V14H8V10ZM8 19V16H5V19H8ZM8 5H5V8H8V5ZM4 3H20C20.5523 3 21 3.44772 21 4V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3Z"></path></svg>
+                            <span style="margin-left: 10px;">Explore Data</span>
+                        </button>
+                    </li>
+
+                    <li>
+                        <button class="dropdown-item" onclick="@OnClickSettings">                     
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(0,0,0,1)"><path d="M21.0082 3C21.556 3 22 3.44495 22 3.9934V20.0066C22 20.5552 21.5447 21 21.0082 21H2.9918C2.44405 21 2 20.5551 2 20.0066V3.9934C2 3.44476 2.45531 3 2.9918 3H21.0082ZM20 5H4V19H20V5ZM18 15V17H6V15H18ZM12 7V13H6V7H12ZM18 11V13H14V11H18ZM10 9H8V11H10V9ZM18 7V9H14V7H18Z"></path></svg>
+                                <span style="margin-left: 10px;">Profile</span>                     
+                        </button>                        
+                    </li>
+                    <li>
+                        <button class="dropdown-item" onclick="@DeleteAllData" hidden="@(!((Global.UserName.ToLower()=="jsadmin") || (Global.UserName.ToLower()=="administrator")))">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M7 4V2H17V4H22V6H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V6H2V4H7ZM6 6V20H18V6H6ZM9 9H11V17H9V9ZM13 9H15V17H13V9Z"></path></svg>
+                            <span style="margin-left: 10px;">Delete Data</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="dropdown-item" onclick="@DeleteImportedSheet" hidden="@(!((Global.UserName.ToLower()=="jsadmin") || (Global.UserName.ToLower()=="administrator")))">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M7 4V2H17V4H22V6H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V6H2V4H7ZM6 6V20H18V6H6ZM9 9H11V17H9V9ZM13 9H15V17H13V9Z"></path></svg>
+                            <span style="margin-left: 10px;">Drop Table</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            
+        </div>
+    </header> 
+    
+    <section class="section content px-2">
+        @if (profiles.Contains(ConnectionProfile.WiFi))
+        {
+            <div style="background-color:lightgreen;height:18px;margin-top: -7px;">
+                <h6 style="text-align:right;color:black">WiFi Mode - @Global.AppVersion</h6>
+            </div>
+        }
+        else if (profiles.Contains(ConnectionProfile.Cellular))
+        {
+            <div style="background-color:lightgreen;height:18px;margin-top: -7px;">
+                <h6 style="text-align:right;color:black">Mobile Data Mode - @Global.AppVersion</h6>
+            </div>
+        }
+        <label hidden="@NoRec">@NoRecMsg</label>
+        <div class="reports d-flex flex-column gap-1">            
+             @* <p style="text-align:right">Hi, <b> @Global.UserName!</b></p> *@
+            <div class="report">
+                <SfListView DataSource="@SheetGrpList" class="report">
+                    <ListViewFieldSettings TValue="DropDownLst" Id="Id" Text="Name">
+                    </ListViewFieldSettings>
+                    <ListViewEvents TValue="DropDownLst" Clicked="ModListView_ItemSelected">
+                    </ListViewEvents>
+                    <ListViewTemplates TValue="DropDownLst">
+                        <Template>
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-9">
+                                        <span>@((context as DropDownLst).Name)</span>
+                                    </div>
+                                    <div class="col-3">
+                                        <SfProgressBar Type="ProgressType.Linear" Value="@(Convert.ToDouble((context as DropDownLst).LognDesc))"
+                                                       TrackColor="white" ProgressColor="#00aeff" Height="6" Minimum="0" Maximum="100">
+                                        </SfProgressBar>
+                                    </div>
+                                </div>
+                            </div>
+                        </Template>
+                    </ListViewTemplates>
+                </SfListView>
+
+                <SfDialog ShowCloseIcon="true" CloseOnEscape="true" @ref="DialogRef" Visible=false>                    
+                    <DialogTemplates>
+                        <Header>Task Manager</Header>
+                        <Content>
+                           <TaskManager></TaskManager>
+                        </Content>
+                        <FooterTemplate>
+                            <SfButton CssClass="e-primary e-flat" @onclick="@CloseDialog">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M11.9997 10.5865L16.9495 5.63672L18.3637 7.05093L13.4139 12.0007L18.3637 16.9504L16.9495 18.3646L11.9997 13.4149L7.04996 18.3646L5.63574 16.9504L10.5855 12.0007L5.63574 7.05093L7.04996 5.63672L11.9997 10.5865Z"></path></svg>
+                                Cancel
+                            </SfButton> 
+                        </FooterTemplate>
+                    </DialogTemplates>                   
+                </SfDialog>
+                <SfSpinner Size="40" @bind-Visible="@SpinnerVisibleProperty" Type="SpinnerType.Bootstrap5"></SfSpinner>
+            </div>
+        </div>
+        <SfDialog Width="auto" ShowCloseIcon="true" IsModal="true" @bind-Visible="@IsPendTaskVisible">
+            <DialogTemplates>
+                <Header>Pending Task data</Header>
+                <Content>
+                    <SfGrid class="tab-grid-min-height" @ref="DefaultGrid" AllowSelection="true" DataSource="@DataSource" GridLines="GridLine.Both" RowHeight="@CoreVars.ROWHEIGHT" AllowResizing="true" EnableAutoFill="true">
+                        @* <GridEvents RowSelected="RowSelectHandler" OnRecordDoubleClick="RecordDoubleClickHandler" TValue="ExpandoObject"></GridEvents> *@
+                        <GridSelectionSettings EnableToggle="false"></GridSelectionSettings>
+                        <GridColumns>
+                            @if (DataTbl.Rows.Count > 0)
+                            {
+                                @foreach (var stru in DataTbl.Columns)
+                                {
+                                    if (stru.ToString() == "TaskId")
+                                    {
+                                        <GridColumn Field=@stru.ToString() HeaderText=@stru.ToString() TextAlign="TextAlign.Left" AutoFit="true" AllowResizing="true" Visible="false" />
+                                    }
+                                    else
+                                    {
+                                        <GridColumn Field=@stru.ToString() HeaderText=@stru.ToString() TextAlign="TextAlign.Left" AutoFit="true" AllowResizing="true" />
+                                    }
+                                }
+                            }
+                        </GridColumns>
+                    </SfGrid>
+                </Content>
+                <FooterTemplate>
+                    <SfButton CssClass="e-primary e-flat" @onclick="@PendingCloseDialog">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M11.9997 10.5865L16.9495 5.63672L18.3637 7.05093L13.4139 12.0007L18.3637 16.9504L16.9495 18.3646L11.9997 13.4149L7.04996 18.3646L5.63574 16.9504L10.5855 12.0007L5.63574 7.05093L7.04996 5.63672L11.9997 10.5865Z"></path></svg>
+                        Cancel
+                    </SfButton>
+                </FooterTemplate>
+            </DialogTemplates>
+        </SfDialog>
+
+
+        @* <SfDialog @bind-Visible="@HideDialog" Height="50px" Width="50px">
+            <DialogTemplates>
+                <Header>Scan</Header>
+                <Content>
+                    <QRCodeScanner></QRCodeScanner>
+                </Content>
+            </DialogTemplates>
+        </SfDialog> *@
+        
+        <SfSpinner Size="40" @bind-Visible="SpinnerVisiblity" Type="SpinnerType.Bootstrap5"></SfSpinner>
+    </section>
+
+    <!-- Modal1 : start -->
+        <HelpDesk></HelpDesk>
+    <!-- Modal1 : end -->
+    <!-- Modal2 : start -->
+        <ExitModal></ExitModal>
+    <!-- Modal2 : end -->
+
+    <a class="icon icon-scanner" onclick="@ShowQRCodePg">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="24" fill="rgba(255,255,255,1)"><path d="M16 17V16H13V13H16V15H18V17H17V19H15V21H13V18H15V17H16ZM21 21H17V19H19V17H21V21ZM3 3H11V11H3V3ZM5 5V9H9V5H5ZM13 3H21V11H13V3ZM15 5V9H19V5H15ZM3 13H11V21H3V13ZM5 15V19H9V15H5ZM18 13H21V15H18V13ZM6 6H8V8H6V6ZM6 16H8V18H6V16ZM16 6H18V8H16V6Z"></path></svg>
+    </a>
+</div>
+
+<style>
+    /* .imgTransform {
+        position: absolute;
+        bottom: 5px;
+        right: 15px;
+    } */
+    .e-dialog .e-dlg-header-content {
+        background-color: #00aeff
+    }
+
+    .e-dialog .e-dlg-header {
+        color: #fff
+    }
+
+    .e-dialog .e-dlg-header .e-btn-icon.e-icon-dlg-close {
+        color: #fff
+    }
+
+    .e-btn-icon.e-icons.e-close-icon.e-icon-left:before {
+        content: '\e825';
+    }
+</style>
+
+@code {
+    IEnumerable<ConnectionProfile> profiles = Connectivity.Current.ConnectionProfiles;
+    NetworkAccess accessType = Connectivity.Current.NetworkAccess;
+    private bool VisibleProperty { get; set; } = false;
+    public List<DropDownLst> Menu = new(); 
+    private DSRptDevDet? DSRptDevDet;
+    private readonly DatabaseContext _context = new DatabaseContext();
+    private IEnumerable<UserDet> UserData;
+    private bool NoRec = true;
+    bool IconVisiblity;
+    int EmptyPrmCnt;
+    int TotPrmCnt = 0;
+    private string NoRecMsg = "";
+    private IEnumerable<DevParamDet> Devparmadet;
+    private IEnumerable<DevParamDet> Devparmadet_filer;    
+    private List<DropDownLst> SheetGrpList = new List<DropDownLst>();    
+    DropDownLst dropDownLst = new DropDownLst();
+    SfDialog DialogRef;
+    private string HideBtn = string.Empty;
+    private bool SpinnerVisibleProperty { get; set; } = false;
+    // public bool Isdisable = false;
+    private bool IsPendTaskVisible { get; set; } = false;
+    // private List<DropDownLst> PendingList = new List<DropDownLst>();
+    private SfGrid<System.Dynamic.ExpandoObject> DefaultGrid { get; set; }
+    public List<System.Dynamic.ExpandoObject>? DataSource;
+    private DataTable? DataTbl = new DataTable();
+    private bool SpinnerVisiblity { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        //Global.IsReadOnly = (((Global.UserName.ToLower() == "jsadmin") || (Global.UserName.ToLower() == "administrator")) ? false : true);
+        Global.IsReadOnly = ((Global.UserName.ToLower().Trim() == "administrator") ? false : true);
+        this.SpinnerVisibleProperty = true;
+        VisibleProperty = false;
+        this.IsPendTaskVisible = false;//(Global.ShowPendTask ? true : false);
+        DeleteMedia();
+        await GetPendingTaskList();
+        await GetSheetList();
+
+        // if (Global.IsInterNetConnected)
+        // {
+        //     MakePtyDBConn();
+        //     //IconVisiblity = true;
+        // }
+        // else
+        // {
+        //     //IconVisiblity = false;
+        //     //this.IsPendTaskVisible = true;
+        //     await GetPendingTaskList();
+        //     await GetSheetList();
+        // }
+
+        /* if (accessType != NetworkAccess.Internet)
+        {
+            IconVisiblity = false;
+            this.IsVisible = true;
+            await GetPendingList();
+            await GetSheetList();
+            }
+        else
+        {
+            MakePtyDBConn();
+            IconVisiblity = true;
+            }*/
+    }
+
+    public async Task GetPendingTaskList()
+    {
+        try{
+
+
+            Expression<Func<TaskMst, bool>> Predicate = user => (user.Status == "Open");
+            var PendLst = (await _context.GetFileteredAsync(Predicate)).ToList();        
+            List<string> PendingLst = new List<string>(); 
+            // DropDownLst dropDownLst = new();        
+            DataTbl = ListToDataTable(PendLst);
+            DataSource = null;
+            if (DataTbl.Rows.Count > 0)
+            {
+                DataSource = new List<System.Dynamic.ExpandoObject>();
+                foreach (DataRow row in DataTbl.Rows)
+                {
+                    System.Dynamic.ExpandoObject e = new System.Dynamic.ExpandoObject();
+                    foreach (DataColumn col in DataTbl.Columns)
+                    {
+                        e.TryAdd(col.ColumnName, row.ItemArray[col.Ordinal]);
+                    }
+                    DataSource.Add(e);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await sfDialogService.AlertAsync("GetPendingTaskList => " + ex.Message, CoreVars.EXERROR);
+        }
+    }
+
+
+    public DataTable ListToDataTable<T>(List<T> items)
+    {
+        DataTable dataTable = new DataTable(typeof(T).Name);
+        //Get all the properties by using reflection
+        PropertyInfo[] Props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        foreach (PropertyInfo prop in Props)
+        {
+            //Setting column names as Property names
+            dataTable.Columns.Add(prop.Name);
+        }
+        foreach (T item in items)
+        {
+            var values = new object[Props.Length];
+            for (int i = 0; i < Props.Length; i++)
+            {
+                values[i] = Props[i].GetValue(item, null);
+            }
+            dataTable.Rows.Add(values);
+        }
+        return dataTable;
+    }
+
+
+    public void ModListView_ItemSelected(ClickEventArgs<DropDownLst> args)
+    {
+        Global.Sheet = args.Text.Trim();
+        Global.SheetId = args.ItemData.Id.ToString();
+        Global.ShowPendTask = false;
+        Navmanage.NavigateTo("/sheetgrp");
+    }
+    public async Task GetSheetList()
+    {
+        try
+        {
+            List<string> SheetLst = new List<string>();
+
+            if (Global.UserName.ToLower().Trim() == "jsadmin" || Global.UserName.ToLower().Trim() == "administrator")
+            {
+                HideBtn = " ";
+                var SheetData = await _context.GetAllAsync<SheetDet>();
+
+                foreach (var data in SheetData)
+                {
+                    SheetLst.Add(data.Sheet);               
+
+                    Expression<Func<DevParamDet, bool>> predicare = user => (user.Sheet == data.Sheet);
+                    Devparmadet = await _context.GetFileteredAsync(predicare);
+
+                    var EmptyObj = Devparmadet.Where(a => string.IsNullOrEmpty(a.ParamData));
+                    TotPrmCnt = Devparmadet.Count();
+                    string Calc = "";
+                    EmptyPrmCnt = EmptyObj.Count();
+                    if ((TotPrmCnt - EmptyPrmCnt) > 0)
+                    {
+                        var Tmp = ((TotPrmCnt - EmptyPrmCnt) * 100) / TotPrmCnt;
+                        Calc = Tmp.ToString();
+                    }
+                    else
+                    {
+                        var Tmp = 0;
+                        Calc = Tmp.ToString();
+                    }
+
+                    dropDownLst = new DropDownLst
+                    {
+                        Id = data.Id.ToString(),//data.Sheet
+                        Name = data.Sheet,
+                        LognDesc = Calc//EmptyPrmCnt.ToString() + "/ " + TotPrmCnt.ToString()
+                    };
+                    SheetGrpList.Add(dropDownLst);
+                }
+            }
+            else
+            {
+                HideBtn = "none";
+                Expression<Func<UserDet, bool>> AssignedSheet = user => user.UserName.ToLower() == Global.UserName.ToLower();
+                var SheetData = await _context.GetFileteredAsync(AssignedSheet);
+
+                foreach (var data in SheetData)
+                {
+                    SheetLst.Add(data.Sheet);
+
+                    Expression<Func<DevParamDet, bool>> predicare = user => (user.Sheet == data.Sheet);
+                    Devparmadet = await _context.GetFileteredAsync(predicare);
+
+                    var EmptyObj = Devparmadet.Where(a => string.IsNullOrEmpty(a.ParamData));
+                    TotPrmCnt = Devparmadet.Count();
+                    string Calc = "";
+                    EmptyPrmCnt = EmptyObj.Count();
+                    if ((TotPrmCnt - EmptyPrmCnt) > 0)
+                    {
+                        var Tmp = ((TotPrmCnt - EmptyPrmCnt) * 100) / TotPrmCnt;
+                        Calc = Tmp.ToString();
+                    }
+                    else
+                    {
+                        var Tmp = 0;
+                        Calc = Tmp.ToString();
+                    }
+                    dropDownLst = new DropDownLst
+                    {
+                        Id = data.Id.ToString(),//data.Sheet
+                        Name = data.Sheet,
+                        LognDesc = Calc//EmptyPrmCnt.ToString() + "/ " + TotPrmCnt.ToString()
+                    };
+
+                    // dropDownLst = new DropDownLst
+                    // {
+                    //     Id = data.Sheet,
+                    //     Name = data.Sheet,
+                    //     LognDesc = EmptyPrmCnt.ToString() + "/ " + TotPrmCnt.ToString()
+                    // };
+                    SheetGrpList.Add(dropDownLst);
+                }
+            }
+
+            if (SheetLst.Count == 0)
+            {
+                if (Global.UserName.ToLower().Trim() == "jsadmin" || Global.UserName.ToLower().Trim() == "administrator")
+                {
+                    NoRecMsg = "Data is still not imported from the data server.";
+                    // StateHasChanged();
+
+                    bool Process = await sfDialogService.ConfirmAsync("Data is still not imported from the data server. Do you want to import data?", CoreVars.APPMANAGER);
+                    if (Process)
+                    {
+                        ImportDeviceData();
+                    }
+                }
+                else
+                {
+                    NoRecMsg = "You do not have rights to view any Log Sheet. Please consult your system admin.";
+                }
+                NoRec = false;
+            }
+            else
+            {
+                Menu = RazorFunc.ConvertToDropDownLst(null, SheetLst);
+                NoRec = true;
+            }
+            this.SpinnerVisibleProperty = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await sfDialogService.AlertAsync("GetSheetList => " + ex.Message, CoreVars.EXERROR);
+        }
+    }
+
+    private async void MakePtyDBConn()
+    {
+        VisibleProperty = true;
+        try
+        {
+            DSRptDevDet DSRptDevDet1 = new DSRptDevDet
+            {
+                AppType = Global.AppType,
+                DeviceId = Global.MobileNo
+            };
+            string json = JsonConvert.SerializeObject(DSRptDevDet1);
+            var response = await RazorFunc.CallAPIAsync((string.IsNullOrEmpty(Global.PtyAPIURL) ? Global.APIURL : Global.PtyAPIURL), "MakePtyDBConn", json);//(Global.IsInterNetConnected ? Global.APIURL : Global.PtyAPIURL)
+            var respStatusCode = response.StatusCode;
+            if (respStatusCode.ToString() == "OK")
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var retJSON = JsonConvert.DeserializeObject<RetJSON>(responseBody);
+                Global.PtyDBConnStr = JsonConvert.DeserializeObject<SQLConnStr>(retJSON.Data);
+
+                if (retJSON.Status.ToString() == "Error")
+                {
+                    await sfDialogService.AlertAsync(retJSON.Msg.ToString() + retJSON.ExError, CoreVars.EXERROR);
+                }
+                else
+                {
+                    // this.IsPendTaskVisible = true;
+                    await GetPendingTaskList();
+                    await GetSheetList();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await sfDialogService.AlertAsync("MakePtyDBConn => " + ex.Message, CoreVars.EXERROR);
+        }
+        VisibleProperty = false;
+    }
+    public void OnClickSettings()
+    {
+        VisibleProperty = false;
+        Global.ShowPendTask = false;
+        Navmanage.NavigateTo("/profilepg");
+    }
+    public void LogOut()
+    {
+        VisibleProperty = false;
+        Global.ShowPendTask = false;
+        Navmanage.NavigateTo("/login");
+    }
+    public void ShowQRCodePg()
+    {
+        Global.IsReadOnly = false;
+        Navmanage.NavigateTo("/QRScan");
+    }
+
+    public async void GroupScanner()
+    {
+        Global.IsReadOnly = false;
+        VisibleProperty = true;
+        try
+        {
+            string SheetGrpName;
+            SheetGrpName = await sfDialogService.PromptAsync("Enter Group Name:", CoreVars.APPMANAGER);
+            if (!string.IsNullOrEmpty(SheetGrpName))
+            {
+                var parts = SheetGrpName.Split('_', 2);
+                if (parts.Length > 0)
+                {
+                    Global.Sheet = parts[0];
+                }
+                if (parts.Length > 1)
+                {
+                    Global.SheetGrp = parts[1];
+                }
+
+                if (!string.IsNullOrEmpty(Global.Sheet) && !string.IsNullOrEmpty(Global.SheetGrp))
+                {
+                    Expression<Func<DevParamDet, bool>> predicare2 = GrpData => (GrpData.Sheet == Global.Sheet && GrpData.GrpName == Global.SheetGrp);
+                    var GrpNameData = await _context.GetFileteredAsync(predicare2);
+                    int EmptyPrmCnt = GrpNameData.Count();
+                    if (EmptyPrmCnt > 0)
+                    {
+                        Global.ShowPendTask = false;
+                        Navmanage.NavigateTo("/parameter");
+                    }
+                    else
+                    {
+                        await sfDialogService.AlertAsync("Group Not Found.", CoreVars.EXERROR);
+                    }
+                }
+                else
+                {
+                    await sfDialogService.AlertAsync("Group is Empty.", CoreVars.EXERROR);
+                }
+            }
+            VisibleProperty = false;
+        }
+        catch(Exception ex)
+        {
+            await sfDialogService.AlertAsync("GroupScanner => " + ex.Message, CoreVars.EXERROR);
+            VisibleProperty = false;
+        }
+        VisibleProperty = false;
+    }
+    public void ViewData()
+    {
+        Global.ShowPendTask = false;
+        Navmanage.NavigateTo("/viewdata");
+    }
+    public async void ImportDeviceData()
+    {
+        this.SpinnerVisibleProperty = true;
+        VisibleProperty = true;
+        try
+        {
+            //await sfDialogService.AlertAsync("API :" + (string.IsNullOrEmpty(Global.PtyAPIURL) ? Global.APIURL : Global.PtyAPIURL), CoreVars.APPMANAGER);
+
+            await _context.DeleteAlllItemsAsync<SheetDet>();
+            await _context.DeleteAlllItemsAsync<UserDet>();
+            await _context.DeleteAlllItemsAsync<DevParamDet>();
+            await _context.DeleteAlllItemsAsync<JSEmailSetUp>();
+
+            var oTblData = new GetTableData
+            {
+                Query = " select a.UserName, dbo.Dngcrypt(a.Password, 'D') as Password, b.Module, c.Sheet, c.Operator" +
+                        " from UserMst a " +
+                        " left join UserRight b on b.UserName = a.UserName " +
+                        " left join MenuMst c on c.MenuId = b.Module " +
+                        " Where isnull(c.Sheet, '') <> '' " +
+                        " and c.FldBook = 'Y' " +
+                        " and a.UserName <> 'ADMINISTRATOR' " +
+                        " Union all " +
+                        " select a.UserName, dbo.Dngcrypt(a.Password, 'D') as Password, 0 as  Module, '' as Sheet, '' as Operator " +
+                        " from UserMst a " +
+                        " where a.UserName = 'ADMINISTRATOR' " +
+                        " Order by 1 ",
+                SQLConnStr = Global.PtyDBConnStr
+            };
+            string json = JsonConvert.SerializeObject(oTblData);
+            var response = await RazorFunc.CallAPIAsync((string.IsNullOrEmpty(Global.PtyAPIURL) ? Global.APIURL : Global.PtyAPIURL), "GetTableData", json);
+            var respStatusCode = response.StatusCode;
+            if (respStatusCode.ToString() == "OK")
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var retJSON = JsonConvert.DeserializeObject<RetJSON>(responseBody);
+                if (retJSON.Status.ToString() == "Error")
+                {
+                    await sfDialogService.AlertAsync(retJSON.Msg.ToString() + retJSON.ExError, CoreVars.EXERROR);
+                }
+                else
+                {
+                    var DataTbl = JsonConvert.DeserializeObject<DataTable>(retJSON.Data.ToString().Trim());
+
+                    UserDet UserSheetLst;
+                    int Cnt = 1;
+                    foreach (DataRow Row in DataTbl.Rows)
+                    {
+                        UserSheetLst = new UserDet();
+                        UserSheetLst.UserName = Row["UserName"].ToString().Trim();
+                        UserSheetLst.Password = Row["Password"].ToString().Trim();
+                        UserSheetLst.Module = Row["Module"].ToString().Trim();
+                        UserSheetLst.Sheet = Row["Sheet"].ToString().Trim();
+                        UserSheetLst.Operator = Row["Operator"].ToString().Trim();
+                        UserSheetLst.Id = Cnt++;
+                        await _context.AddItemAsync<UserDet>(UserSheetLst);
+                    }
+                    await sfDialogService.AlertAsync("User details imported successfully.", CoreVars.APPMANAGER);
+
+                    // var table1 = await _context.GetAllAsync<UserDet>();
+
+
+                    oTblData = new GetTableData
+                    {
+                        Query = " select sheet, MenuId from MenuMst Where FldBook = 'Y' Order by MenuId ",
+                        SQLConnStr = Global.PtyDBConnStr
+                    };
+                    json = JsonConvert.SerializeObject(oTblData);
+                    response = await RazorFunc.CallAPIAsync((string.IsNullOrEmpty(Global.PtyAPIURL) ? Global.APIURL : Global.PtyAPIURL), "GetTableData", json);
+                    respStatusCode = response.StatusCode;
+                    if (respStatusCode.ToString() == "OK")
+                    {
+                        responseBody = await response.Content.ReadAsStringAsync();
+                        retJSON = JsonConvert.DeserializeObject<RetJSON>(responseBody);
+                        if (retJSON.Status.ToString() == "Error")
+                        {
+                            await sfDialogService.AlertAsync(retJSON.Msg.ToString() + retJSON.ExError, CoreVars.EXERROR);
+                        }
+                        else
+                        {
+                            DataTbl = JsonConvert.DeserializeObject<DataTable>(retJSON.Data.ToString().Trim());
+
+                            SheetDet SheetLst;
+                            Cnt = 1;
+                            foreach (DataRow Row in DataTbl.Rows)
+                            {
+                                SheetLst = new SheetDet();
+                                SheetLst.Sheet = Row["Sheet"].ToString().Trim();
+                                //SheetLst.Id = Cnt++;
+                                SheetLst.Id = Convert.ToInt32(Row["MenuId"].ToString());
+                                await _context.AddItemAsync<SheetDet>(SheetLst);
+                            }
+                            await sfDialogService.AlertAsync("Sheet details imported successfully.", CoreVars.APPMANAGER);
+
+                            // var table2 = await _context.GetAllAsync<SheetDet>();
+
+                            oTblData = new GetTableData
+                            {
+                                Query = "Select d.Sheet, b.GrpName, a.SubParam, a.SubDetId, a.Shift, a.Unit, b.Range, b.MinVal, b.MaxVal, b.FixVal, " +
+                                        " a.Value as ParamData, a.DataType, d.Operator, a.GenName as PDispName, b.GenGrpNm as GDispName, d.MenuId," +
+                                        " RIGHT('000' + ltrim(rTrim( str(b.RowNo) )), 4) as RowNo, '' as SNAME, '' as SSHIFT, '' as SDATE, '' as SUSER, '' as LogDate, '' as LogTime, isnull(d.QRCodePattern,0) as QRCodePattern " +
+                                        " from DevParamSubDet a" +
+                                        " left join DEVPARAMDET b on b.DetId = a.DetId " +
+                                        " left join DEVPARAMMST c on c.MstId = b.MstId " +
+                                        " left join MENUMST d on d.MenuId = c.MenuId " +
+                                        " where a.Deleted <> 'Y' and isnull( d.Sheet, '' ) <> '' " + 
+                                        " Order by d.MenuId, b.SrOrd, b.RowNo, a.Sr ",
+                                SQLConnStr = Global.PtyDBConnStr
+                            };
+                            json = JsonConvert.SerializeObject(oTblData);
+                            response = await RazorFunc.CallAPIAsync((string.IsNullOrEmpty(Global.PtyAPIURL) ? Global.APIURL : Global.PtyAPIURL), "GetTableData", json);
+                            respStatusCode = response.StatusCode;
+                            if (respStatusCode.ToString() == "OK")
+                            {
+                                responseBody = await response.Content.ReadAsStringAsync();
+                                retJSON = JsonConvert.DeserializeObject<RetJSON>(responseBody);
+                                if (retJSON.Status.ToString() == "Error")
+                                {
+                                    await sfDialogService.AlertAsync(retJSON.Msg.ToString() + retJSON.ExError, CoreVars.EXERROR);
+                                }
+                                else
+                                {
+                                    DataTbl = JsonConvert.DeserializeObject<DataTable>(retJSON.Data.ToString().Trim());
+
+                                    DevParamDet ParamLst;
+                                    Cnt = 1;
+                                    foreach (DataRow Row in DataTbl.Rows)
+                                    {
+                                        ParamLst = new DevParamDet();
+                                        ParamLst.Sheet = Row["Sheet"].ToString().Trim();
+                                        ParamLst.GrpName = Row["GrpName"].ToString().Trim();
+                                        ParamLst.SubParam = Row["SubParam"].ToString().Trim();
+                                        ParamLst.SubDetId = Row["SubDetId"].ToString().Trim();
+                                        ParamLst.Shift = Row["Shift"].ToString().Trim();
+                                        ParamLst.Unit = Row["Unit"].ToString().Trim();
+                                        ParamLst.Range = Row["Range"].ToString().Trim();
+                                        ParamLst.MinVal = Row["MinVal"].ToString().Trim();
+                                        ParamLst.MaxVal = Row["MaxVal"].ToString().Trim();
+                                        ParamLst.FixVal = Row["FixVal"].ToString().Trim();
+                                        ParamLst.ParamData = Row["ParamData"].ToString().Trim();
+                                        ParamLst.DataType = Row["DataType"].ToString().Trim();
+                                        ParamLst.Operator = Row["Operator"].ToString().Trim();
+                                        ParamLst.PDispName = Row["PDispName"].ToString().Trim();
+                                        ParamLst.GDispName = Row["GDispName"].ToString().Trim();
+                                        ParamLst.RowNo = Row["RowNo"].ToString().Trim();
+                                        ParamLst.SNAME = Row["SNAME"].ToString().Trim();
+                                        ParamLst.SSHIFT = Row["SSHIFT"].ToString().Trim();
+                                        ParamLst.SDATE = Row["SDATE"].ToString().Trim();
+                                        ParamLst.SUSER = Row["SUSER"].ToString().Trim();
+                                        ParamLst.LogDate = Row["LogDate"].ToString().Trim();
+                                        ParamLst.LogTime = Row["LogTime"].ToString().Trim();
+                                        ParamLst.Id = int.Parse(Row["SubDetId"].ToString().Trim());
+                                        ParamLst.SheetId = Row["MenuId"].ToString().Trim();
+                                        ParamLst.QRCodePattern = Row["QRCodePattern"].ToString();
+                                        await _context.AddItemAsync<DevParamDet>(ParamLst);
+
+                                    }
+                                    // var table3 = await _context.GetAllAsync<DevParamDet>();
+                                    await sfDialogService.AlertAsync("Parameter details imported successfully.", CoreVars.APPMANAGER);     
+                                    await GetSheetList();
+                                }
+                            }  
+                        }
+                    }
+                }
+            }
+            // Email Import
+
+            oTblData = new GetTableData
+            {
+                Query = " Select * from JSEMAILSETUP ",
+                SQLConnStr = Global.PtyDBConnStr
+            };
+            json = JsonConvert.SerializeObject(oTblData);
+            response = await RazorFunc.CallAPIAsync((string.IsNullOrEmpty(Global.PtyAPIURL) ? Global.APIURL : Global.PtyAPIURL), "GetTableData", json);
+            respStatusCode = response.StatusCode;
+            if (respStatusCode.ToString() == "OK")
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var retJSON = JsonConvert.DeserializeObject<RetJSON>(responseBody);
+                if (retJSON.Status.ToString() == "Error")
+                {
+                    await sfDialogService.AlertAsync(retJSON.Msg.ToString() + retJSON.ExError, CoreVars.EXERROR);
+                }
+                else
+                {
+                    var DataTbl = JsonConvert.DeserializeObject<DataTable>(retJSON.Data.ToString().Trim());
+                    JSEmailSetUp JsEmailLst;
+                    foreach (DataRow Row in DataTbl.Rows)
+                    {
+                        JsEmailLst = new JSEmailSetUp();
+                        JsEmailLst.EmailAdd = Row["EmailAdd"].ToString().Trim();
+                        JsEmailLst.DispName = Row["DispName"].ToString().Trim();
+                        JsEmailLst.Password = Row["Password"].ToString().Trim();
+                        JsEmailLst.MailServer = Row["MailServer"].ToString().Trim();
+                        JsEmailLst.PortNo = Row["PortNo"].ToString().Trim();
+                        JsEmailLst.SSL = Row["SSL"].ToString().Trim();
+                        JsEmailLst.ToEmailAdd = Row["ToEMailAdd"].ToString().Trim();
+                        JsEmailLst.EmailAuth = Row["EmailAuth"].ToString().Trim();
+                        
+                        await _context.AddItemAsync<JSEmailSetUp>(JsEmailLst);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await sfDialogService.AlertAsync("ImportDeviceData => " + ex.Message, CoreVars.EXERROR);
+            VisibleProperty = false;
+        }
+        this.SpinnerVisibleProperty = false;
+        VisibleProperty = false;
+    }
+
+    public async void ExportDeviceData()
+    {
+        try
+        {
+            VisibleProperty = true;
+            Expression<Func<DevParamDet, bool>> predicate = user => (!string.IsNullOrEmpty(user.ParamData));
+            var ParamDataFilter = await _context.GetFileteredAsync(predicate);
+
+            /*Server Upload Media start*/
+            string directoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "DLogBookMedia");
+            List<ImageFile> filesBase64 = new List<ImageFile>();
+            if (Directory.Exists(directoryPath))
+            {
+                string[] files = Directory.GetFiles(directoryPath);
+                string[] value = {};
+                UploadDowloadImgs imgs = new UploadDowloadImgs();
+                foreach (var row in ParamDataFilter)
+                {
+                    value = Array.FindAll(files, element => element.Contains(row.SubDetId));
+                    //string.Join("','", value)
+                    if (value.Length > 0)
+                    {
+                        foreach (var file in value)
+                        {
+                            filesBase64 = new();
+                            imgs = new UploadDowloadImgs();
+                            string localFilePath = Path.Combine(directoryPath, file);
+                            filesBase64.Add(new ImageFile { Base64data = Convert.ToBase64String(File.ReadAllBytes(localFilePath)), ContentType = " ", FileName = Path.GetFileName(file) }); // convert to a base64 string!!
+
+                            if(filesBase64.Count > 0)
+                            {
+                                imgs.ImageFiles = filesBase64;
+                                imgs.ImgFolder = "DLogUploads";
+                                imgs.AutoFileName = false;
+                                using (var msg = await Http.PostAsJsonAsync<UploadDowloadImgs>((string.IsNullOrEmpty(Global.PtyAPIURL) ? Global.APIURL : Global.PtyAPIURL) + "/image", imgs))
+                                {
+                                    // if (msg.IsSuccessStatusCode)
+                                    // {
+                                    //     await sfDialogService.AlertAsync("Upload images/video successfully from server.", CoreVars.EXERROR);
+                                    // }
+                                    // else
+                                    // {
+                                    //     await sfDialogService.AlertAsync("Error to upload images/video from server.", CoreVars.EXERROR);
+                                    // }
+                                }
+                            }
+
+                        }
+                    }
+                }   
+            }
+
+            /*Server Upload Media end*/
+
+
+            //string JsonParamData = JsonConvert.SerializeObject(ParamDataFilter);
+            List<AllRowValue> allRowValues = new List<AllRowValue>();
+            foreach (var row in ParamDataFilter)
+            {
+                List<RowValue> RowData = new List<RowValue>();    
+
+                RowData.Add(new RowValue { FldName = "DetId", FldValue = 0 });
+                RowData.Add(new RowValue { FldName = "GrpName", FldValue = row.GrpName});
+                RowData.Add(new RowValue { FldName = "Sheet", FldValue = row.Sheet });
+                RowData.Add(new RowValue { FldName = "SubParam", FldValue = row.SubParam });
+                RowData.Add(new RowValue { FldName = "ParamData", FldValue = row.ParamData });
+                RowData.Add(new RowValue { FldName = "DeviceName", FldValue = string.IsNullOrEmpty(row.Operator) ? "" : row.Operator });
+                RowData.Add(new RowValue { FldName = "SDate", FldValue =  RazorFunc.ConvertDate(Global.SLoginDate)});//row.SDATE
+                RowData.Add(new RowValue { FldName = "SShift", FldValue = Global.Shift });//row.SSHIFT
+                RowData.Add(new RowValue { FldName = "SUser", FldValue =  Global.UserName});//row.SUSER
+                RowData.Add(new RowValue { FldName = "SName", FldValue = string.IsNullOrEmpty(Global.SOperator) ? "" : Global.SOperator });//string.IsNullOrEmpty(row.Operator) ? "" : row.Operator
+                RowData.Add(new RowValue { FldName = "LogDate", FldValue = RazorFunc.ConvertDate(row.LogDate) });
+                RowData.Add(new RowValue { FldName = "LogTime", FldValue = row.LogTime });                
+                AllRowValue allRowValue = new AllRowValue
+                {
+                    AllRowValues = RowData
+                };
+                allRowValues.Add(allRowValue);                
+            }
+
+            SaveDataObj saveDataObj = new SaveDataObj()
+            {
+                SQLConnStr = Global.PtyDBConnStr,
+                //DBConnOnServer = "PARTYSERVER",
+                 nAddEdit = 1,
+                 MstTable = "DeviceData",
+                 MstTblRowData = allRowValues,
+                 MstIdFld = "DetId",
+                 DelSaveWhrCondFldVal = " ",
+            };
+
+            string json = JsonConvert.SerializeObject(saveDataObj);
+            var response = await RazorFunc.CallAPIAsync((string.IsNullOrEmpty(Global.PtyAPIURL) ? Global.APIURL : Global.PtyAPIURL), "SaveData", json);
+            var respStatusCode = response.StatusCode;
+            if (respStatusCode.ToString() == "OK")
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var retJSON = JsonConvert.DeserializeObject<RetJSON>(responseBody);
+
+                if (retJSON.Status.ToString() == "Error")
+                {
+                    await sfDialogService.AlertAsync(retJSON.Msg.ToString() + retJSON.ExError, CoreVars.EXERROR);
+
+                }
+                else
+                {
+                    //await GetSheetList();
+                    bool Success;
+                    DevParamDet ParamFilterObj;
+                    foreach (var data in ParamDataFilter)
+                    {
+                        ParamFilterObj = new DevParamDet();
+                        ParamFilterObj.Id = data.Id;
+                        ParamFilterObj.Sheet = data.Sheet;
+                        ParamFilterObj.GrpName = data.GrpName;
+                        ParamFilterObj.SubParam = data.SubParam;
+                        ParamFilterObj.SubDetId = data.SubDetId;
+                        ParamFilterObj.Shift = data.Shift;
+                        ParamFilterObj.Unit = data.Unit;
+                        ParamFilterObj.Range = data.Range;
+                        ParamFilterObj.MinVal = data.MinVal;
+                        ParamFilterObj.MaxVal = data.MaxVal;
+                        ParamFilterObj.FixVal = data.FixVal;
+                        ParamFilterObj.ParamData = string.Empty;
+                        ParamFilterObj.DataType = data.DataType;
+                        ParamFilterObj.PDispName = data.PDispName;
+                        ParamFilterObj.GDispName = data.GDispName;
+                        ParamFilterObj.RowNo = data.RowNo;
+                        ParamFilterObj.SNAME = data.SNAME;
+                        ParamFilterObj.SSHIFT = data.SSHIFT;
+                        ParamFilterObj.SDATE = data.SDATE;
+                        ParamFilterObj.SUSER = data.SUSER;
+                        ParamFilterObj.LogDate = data.LogDate;
+                        ParamFilterObj.LogTime = data.LogTime;
+                        Success = await _context.UpdateItemAsync<DevParamDet>(ParamFilterObj);
+                    }
+                    await sfDialogService.AlertAsync("Exported data successfully.", CoreVars.APPMANAGER);
+                    VisibleProperty = false;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await sfDialogService.AlertAsync("ExportDeviceData => " + ex.Message, CoreVars.EXERROR);
+            VisibleProperty = false;
+        }
+    }
+    private string resultValue;
+    public async void BarcodeScanner()
+    {
+
+        bool Success = false;
+        var result = await App.Current.MainPage.ShowPopupAsync(new MauiPopupPage());
+        if (result != null || !string.IsNullOrEmpty(result.ToString()))
+        {
+            resultValue = result.ToString();
+        }
+        if (!string.IsNullOrEmpty(resultValue))
+        {
+            var parts = resultValue.Split('_', 2);
+            if (parts.Length > 0)
+            {
+                Global.Sheet = parts[0];
+            }
+            if (parts.Length > 1)
+            {
+                Global.SheetGrp = parts[1];
+            }
+
+            if (!string.IsNullOrEmpty(Global.Sheet) && !string.IsNullOrEmpty(Global.SheetGrp))
+            {
+                Expression<Func<DevParamDet, bool>> predicare2 = GrpData => (GrpData.Sheet == Global.Sheet && GrpData.GrpName == Global.SheetGrp);
+                var GrpNameData = await _context.GetFileteredAsync(predicare2);
+                int EmptyPrmCnt = GrpNameData.Count();
+                if (EmptyPrmCnt > 0)
+                {
+                    Navmanage.NavigateTo("/parameter");
+                }
+                else
+                {
+                    await sfDialogService.AlertAsync("Group Not Found.", CoreVars.EXERROR);
+                }
+            }
+            else
+            {
+                await sfDialogService.AlertAsync("Group is Empty.", CoreVars.EXERROR);
+            }
+        }
+        StateHasChanged();
+    }
+
+    private async void OpenDialog()
+    {        
+        await this.DialogRef.ShowAsync(true);        
+    }
+
+    private async void CloseDialog()
+    {                
+        await DialogRef.HideAsync();
+    }
+
+    private void PendingCloseDialog()
+    {
+        this.IsPendTaskVisible = false;
+    }
+    public async void DeleteMedia()
+    {
+        string directoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "DLogBookMedia");
+        if (Directory.Exists(directoryPath))
+        {
+            string[] files = Directory.GetFiles(directoryPath);
+            DateTime threshold = DateTime.Now.AddHours(-48);
+
+            foreach (string file in files)
+            {
+                if (File.Exists(file))
+                {
+                    System.IO.FileInfo fileInfo = new System.IO.FileInfo(file);
+                    if (fileInfo.CreationTime < threshold || fileInfo.LastWriteTime < threshold)
+                    {
+                        File.Delete(file);
+                    }
+                }
+            }
+        }
+        else
+        {
+            Directory.CreateDirectory(directoryPath); // Create the directory if it doesn't exist
+            //await sfDialogService.AlertAsync("Directory does not exist.", CoreVars.APPDATAMANAGER);
+        }
+    }
+    public async void DeleteAllData()
+    {
+        bool yes = await sfDialogService.ConfirmAsync("Are you sure to delete all data?", "Confirm Delete");
+        if (yes)
+        {
+            Expression<Func<DevParamDet, bool>> predicate = user => (!string.IsNullOrEmpty(user.ParamData));
+            var ParamDataFilter = await _context.GetFileteredAsync(predicate);
+            DevParamDet ParamFilterObj;
+            bool Success = false;
+            foreach (var data in ParamDataFilter)
+            {
+                ParamFilterObj = new DevParamDet();
+                ParamFilterObj.Id = data.Id;
+                ParamFilterObj.Sheet = data.Sheet;
+                ParamFilterObj.GrpName = data.GrpName;
+                ParamFilterObj.SubParam = data.SubParam;
+                ParamFilterObj.SubDetId = data.SubDetId;
+                ParamFilterObj.Shift = data.Shift;
+                ParamFilterObj.Unit = data.Unit;
+                ParamFilterObj.Range = data.Range;
+                ParamFilterObj.MinVal = data.MinVal;
+                ParamFilterObj.MaxVal = data.MaxVal;
+                ParamFilterObj.FixVal = data.FixVal;
+                ParamFilterObj.ParamData = string.Empty;
+                ParamFilterObj.DataType = data.DataType;
+                ParamFilterObj.PDispName = data.PDispName;
+                ParamFilterObj.GDispName = data.GDispName;
+                ParamFilterObj.RowNo = data.RowNo;
+                ParamFilterObj.SNAME = data.SNAME;
+                ParamFilterObj.SSHIFT = data.SSHIFT;
+                ParamFilterObj.SDATE = data.SDATE;
+                ParamFilterObj.SUSER = data.SUSER;
+                ParamFilterObj.LogDate = data.LogDate;
+                ParamFilterObj.LogTime = data.LogTime;
+                Success = await _context.UpdateItemAsync<DevParamDet>(ParamFilterObj);
+            }
+            if (Success)
+            {
+                await sfDialogService.AlertAsync("All saved parameter values removed successfully.", CoreVars.APPMANAGER);
+            }
+            else
+            {
+                await sfDialogService.AlertAsync("Error while removing all saved parameter values.", CoreVars.APPMANAGER);    
+            }
+
+
+        }
+    }
+
+    public async void DeleteImportedSheet()
+    {
+        await _context.DeleteAlllItemsAsync<SheetDet>();
+        await _context.DeleteAlllItemsAsync<UserDet>();
+        await _context.DeleteAlllItemsAsync<DevParamDet>();
+        await _context.DeleteAlllItemsAsync<JSEmailSetUp>();
+    }
+
+    private async Task ExportDataToFile()
+    {
+        try
+        {
+            Dictionary<string, string> DictData = new Dictionary<string, string>();
+            var status = await Permissions.RequestAsync<Permissions.StorageWrite>();
+            if (status == PermissionStatus.Granted)
+            {
+                SpinnerVisiblity = true;
+                StateHasChanged();
+                var SheetData = (await _context.GetAllAsync<SheetDet>()).ToList();
+                string strSheetData = ConvertToCsvDynamic(SheetData);
+                DictData.Add("SheetData", strSheetData);
+
+                var UserDetData = (await _context.GetAllAsync<UserDet>()).ToList();
+                string strUserDetData = ConvertToCsvDynamic(UserDetData);
+                DictData.Add("UserData", strUserDetData);
+
+                var DevParamDetData = (await _context.GetAllAsync<DevParamDet>()).ToList();
+                string strDevParamData = ConvertToCsvDynamic(DevParamDetData);
+                DictData.Add("DevParamDet", strDevParamData);
+
+                var jSEmailData = (await _context.GetAllAsync<JSEmailSetUp>()).ToList();
+                string EmailAddresses = jSEmailData[0].EmailAdd.ToString();
+                string ToEmailAdd = jSEmailData[0].ToEmailAdd.ToString();
+                bool SSL = ((int.Parse(jSEmailData[0].SSL.ToString()) == 1) ? true : false);
+                int PortNo = int.Parse(jSEmailData[0].PortNo.ToString());
+                string Password = jSEmailData[0].Password.ToString();
+                string DispName = jSEmailData[0].DispName.ToString();
+                string MailServer = jSEmailData[0].MailServer.ToString();
+                bool EmailAuth = ((int.Parse(jSEmailData[0].EmailAuth.ToString()) == 1) ? true : false);
+
+                await EmailService.SendEmailAsync(EmailAddresses, "User Data", " data ", ToEmailAdd, PortNo, Password, MailServer, EmailAuth, SSL, DictData);
+                //await EmailService.SendEmailAsync("ranaroshan621@gmail.com", "User Data", " data ", DictData );
+            }
+            SpinnerVisiblity = false;
+            StateHasChanged();
+            await sfDialogService.AlertAsync("Email sent successfully.", CoreVars.APPMANAGER);
+        }
+        catch (Exception ex)
+        {
+            await sfDialogService.AlertAsync(ex.Message, CoreVars.EXERROR);
+            SpinnerVisiblity = false;
+            StateHasChanged();
+        }
+    }    
+    
+    public string ConvertToCsvDynamic<T>(List<T> dataList)
+    {
+        if (dataList == null || !dataList.Any())
+            return string.Empty;
+
+        var sb = new StringBuilder();
+
+        var props = typeof(T).GetProperties();
+
+        // Header
+        sb.AppendLine(string.Join(",", props.Select(p => p.Name)));
+
+        // Rows
+        foreach (var item in dataList)
+        {
+            var values = props.Select(p =>
+            {
+                return p.GetValue(item, null);
+            });
+
+            sb.AppendLine(string.Join(",", values));
+        }
+
+        return sb.ToString();
+    }
+}

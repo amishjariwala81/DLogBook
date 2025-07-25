@@ -1,0 +1,1193 @@
+﻿@page "/parameter"
+@inject SfDialogService DialogService
+@inject NavigationManager Navmanage
+
+@using Newtonsoft.Json
+@using Syncfusion.Blazor.Popups
+@using System.Data
+@using JSCoreLibRazor
+@using DLogBook.Data
+@using SQLite
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Lists
+@using System.Linq.Expressions
+@using Microsoft.Maui.Media;
+@using Microsoft.Maui.Storage;
+@using System.IO;
+@using System.Threading.Tasks;
+@using Microsoft.AspNetCore.Components;
+@using Microsoft.Maui.Controls;
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Spinner
+@using System.Net.NetworkInformation
+
+<div id="page" class="page">
+    
+    <header class="header">
+        <div class="site-brand">
+            <img src="/Images/logo.png" />
+        </div>
+        <div class="header-title">
+            <h1>@Global.Sheet</h1>
+        </div>
+        <div class="header-icons">
+            <a class="icon" href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M22 17.0022C21.999 19.8731 19.9816 22.2726 17.2872 22.8616L16.6492 20.9476C17.8532 20.7511 18.8765 20.0171 19.4649 19H17C15.8954 19 15 18.1046 15 17V13C15 11.8954 15.8954 11 17 11H19.9381C19.446 7.05369 16.0796 4 12 4C7.92038 4 4.55399 7.05369 4.06189 11H7C8.10457 11 9 11.8954 9 13V17C9 18.1046 8.10457 19 7 19H4C2.89543 19 2 18.1046 2 17V12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12V12.9987V13V17V17.0013V17.0022ZM20 17V13H17V17H20ZM4 13V17H7V13H4Z"></path></svg>
+            </a>
+            <a class="icon" onclick="@OpenTaskDialog">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M21 15L15 20.996L4.00221 21C3.4487 21 3 20.5551 3 20.0066V3.9934C3 3.44476 3.44495 3 3.9934 3H20.0066C20.5552 3 21 3.45576 21 4.00247V15ZM19 5H5V19H13V14C13 13.4872 13.386 13.0645 13.8834 13.0067L14 13L19 12.999V5ZM18.171 14.999L15 15V18.169L18.171 14.999Z"></path></svg>
+            </a>
+            @* <a class="icon" onclick="@LogOut">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="24" fill="rgba(255,255,255,1)"><path d="M4 18H6V20H18V4H6V6H4V3C4 2.44772 4.44772 2 5 2H19C19.5523 2 20 2.44772 20 3V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V18ZM6 11H13V13H6V16L1 12L6 8V11Z"></path></svg>
+            </a> *@
+            <a class="icon" href="#" data-bs-toggle="modal" data-bs-target="#exampleModalOne">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M6.26489 3.80698L7.41191 5.44558C5.34875 6.89247 4 9.28873 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 9.28873 18.6512 6.89247 16.5881 5.44558L17.7351 3.80698C20.3141 5.61559 22 8.61091 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 8.61091 3.68594 5.61559 6.26489 3.80698ZM11 12V2H13V12H11Z"></path></svg>
+            </a>
+        </div>
+    </header>
+    
+    <section class="section content px-2" style="margin-top:0px;">
+        @if (profiles.Contains(ConnectionProfile.WiFi))
+        {
+            <div style="background-color:lightgreen;height:18px;margin-top: -7px;">
+                <h6 style="text-align:right;color:black">WiFi Mode</h6>
+            </div>
+        }
+        else if (profiles.Contains(ConnectionProfile.Cellular))
+        {
+            <div style="background-color:lightgreen;height:18px;margin-top: -7px;">
+                <h6 style="text-align:right;color:black">Mobile Data Mode</h6>
+            </div>
+        }
+        <div style="display:flex; position:sticky; top:0px; z-index: 99; background:white; align-items:center; justify-content:center;">
+            <h3>@Global.SheetGrp</h3>
+        </div>
+        <div>
+            @DynamicRender                               
+        </div>
+        <SfSpinner Size="40" @bind-Visible="@VisibleProperty" Type="SpinnerType.Bootstrap5"></SfSpinner>
+        <SfDialog ShowCloseIcon="true" CloseOnEscape="true" @ref="TaskDialogRef" Visible=false>
+            <DialogTemplates>
+                <Header>Task Manager</Header>
+                <Content>
+                    <TaskManager></TaskManager>
+                </Content>
+                <FooterTemplate>
+                    <SfButton CssClass="e-primary e-flat" @onclick="@CloseTaskDialog">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M11.9997 10.5865L16.9495 5.63672L18.3637 7.05093L13.4139 12.0007L18.3637 16.9504L16.9495 18.3646L11.9997 13.4149L7.04996 18.3646L5.63574 16.9504L10.5855 12.0007L5.63574 7.05093L7.04996 5.63672L11.9997 10.5865Z"></path></svg>
+                        Cancel
+                    </SfButton>
+                </FooterTemplate>
+            </DialogTemplates>
+            @* <DialogButtons>
+                <DialogButton Content="Close" IsPrimary="true" OnClick="@CloseTaskDialog" />
+            </DialogButtons> *@
+        </SfDialog>
+    </section>
+
+    <footer class="footer">
+        <div class="d-flex align-content-center justify-content-between flex-nowrap p-2 gap-2">
+            <button class="btn btn-primary w-50" title="Login" @onclick="SaveData">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M7 19V13H17V19H19V7.82843L16.1716 5H5V19H7ZM4 3H17L21 7V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3ZM9 15V19H15V15H9Z"></path></svg>
+                Save</button>
+            <button class="btn btn-light w-50" title="Login" @onclick="back">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(0,0,0,1)"><path d="M11.9997 10.5865L16.9495 5.63672L18.3637 7.05093L13.4139 12.0007L18.3637 16.9504L16.9495 18.3646L11.9997 13.4149L7.04996 18.3646L5.63574 16.9504L10.5855 12.0007L5.63574 7.05093L7.04996 5.63672L11.9997 10.5865Z"></path></svg>
+                Cancel</button>
+        </div>
+    </footer>
+    <!-- Modal1 : start -->
+    <HelpDesk></HelpDesk>
+    <!-- Modal1 : end -->
+    <!-- Modal2 : start -->
+    <ExitModal></ExitModal>
+    <!-- Modal2 : end -->
+    <SfDialog Width="250px" ShowCloseIcon="true" CloseOnEscape="true" Visible="false" @ref="DialogRef">
+        <DialogTemplates>
+             <Header> Attachments </Header>
+             
+             <Content>
+                 @MediaDynamicRender
+             </Content>
+         </DialogTemplates>
+         <DialogButtons>
+             <DialogButton Content="Close" IsPrimary="true" OnClick="@CloseDialog" />
+         </DialogButtons>
+    </SfDialog>
+
+</div>
+
+<style>
+    .e-dialog .e-dlg-header .e-icons.sf-icon-Minimize
+    {
+        float: right;
+        position: relative;
+        cursor: pointer;
+        color: grey;
+    }
+
+    .e-dialog .e-dlg-header .e-icons.sf-icon-Maximize::before
+    {
+        position: relative;
+    }
+    .e-dialog .e-dlg-header-content {
+        background-color: #00aeff
+    }
+
+    .e-dialog .e-dlg-header {
+        color: #fff
+    }
+
+    .e-dialog .e-dlg-header .e-btn-icon.e-icon-dlg-close {
+        color: #fff
+    }
+
+    .BackColor
+    {
+        background:@ColorVal;
+    }
+
+    .multiline 
+    {
+        margin-top: 2px;
+        width: 100%;       
+    }
+     
+    .e-input-group .e-input[readonly],
+    .e-input-group.e-control-wrapper .e-input[readonly],
+    .e-float-input input[readonly],
+    .e-float-input.e-control-wrapper input[readonly],
+    .e-float-input textarea[readonly],
+    .e-float-input.e-control-wrapper textarea[readonly] {
+        color: @TextColor
+    } 
+</style>
+
+@code
+{
+    IEnumerable<ConnectionProfile> profiles = Connectivity.Current.ConnectionProfiles;
+    private bool VisibleProperty { get; set; } = false;
+    public List<DropDownLst> ParamMenu = new();
+    private DSRptDevDet? DSRptDevDet;
+    private readonly DatabaseContext _context = new DatabaseContext();
+    private IEnumerable<DevParamDet> ParamDet;
+    LogModel LogObj;
+    private List<LogModel> LogCtrl = new List<LogModel>();
+    private RenderFragment DynamicRender { get; set; }
+    bool Success;
+    private Dictionary<string, object> StyleAttributes { get; set; }
+    private RenderFragment AddStyleContent;   
+    public string FormatString = "";
+    public string Val;
+    public double Max = 0;
+    public double Min = 0;
+    public string ColorVal = string.Empty;
+    public string StyleVal = string.Empty;       
+    private string ParamName = string.Empty;
+    private RenderFragment MediaDynamicRender { get; set; }
+    string imgTag = string.Empty;
+    string VideoTag = string.Empty;
+    SfDialog DialogRef;
+    SfDialog TaskDialogRef;
+    private bool IsVisible { get; set; } = false;
+    public string TextColor = "#343a40";
+    public void back()
+    {
+        Navmanage.NavigateTo("/sheetgrp");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        this.VisibleProperty = true;
+
+        // await DialogService.AlertAsync("ReadOnly " + Global.IsReadOnly, CoreVars.EXERROR);
+        await ParamData();
+        DisplayData();        
+    }
+    private async Task CloseDialog()
+    {
+        await this.DialogRef.HideAsync();
+    }
+
+    public async Task ParamData()
+    {
+        Expression<Func<DevParamDet, bool>> GrpCond = user => ( user.GrpName == Global.SheetGrp && user.Sheet == Global.Sheet ) ;
+
+        ParamDet = await _context.GetFileteredAsync(GrpCond);
+        foreach (var data in ParamDet)
+        {
+            if ((!string.IsNullOrEmpty(data.Shift) && Global.Shift == data.Shift) || string.IsNullOrEmpty(data.Shift))
+            {
+                LogObj = new LogModel();
+                LogObj.Id = data.Id;
+                LogObj.Sheet = data.Sheet;
+                LogObj.GrpName = data.GrpName;
+                LogObj.SubParam = data.SubParam;
+                LogObj.SubDetId = data.SubDetId;
+                LogObj.Shift = data.Shift;
+                LogObj.Unit = data.Unit;
+                LogObj.Range = data.Range;
+                LogObj.MinVal = data.MinVal;
+                LogObj.MaxVal = data.MaxVal;
+                LogObj.FixVal = data.FixVal;
+                LogObj.ParamData = data.ParamData;
+                LogObj.DataType = data.DataType;
+                LogObj.PDispName = (!string.IsNullOrEmpty(data.PDispName) ? data.PDispName : data.SubParam);
+                LogObj.GDispName = data.GDispName;
+                LogObj.RowNo = data.RowNo;
+                LogObj.SNAME = data.SNAME;
+                LogObj.SSHIFT = data.SSHIFT;
+                LogObj.SDATE = data.SDATE;
+                LogObj.SUSER = data.SUSER;
+                LogObj.LogDate = data.LogDate;
+                LogObj.LogTime = data.LogTime;
+                LogObj.SheetId = data.SheetId;
+                LogCtrl.Add(LogObj);        
+            }
+        }
+        this.VisibleProperty = false;
+        DynamicRender = CreateComponent();
+        StateHasChanged();
+    }
+
+    public void LogOut()
+    {
+        Navmanage.NavigateTo("/login");
+    }
+
+    public RenderFragment CreateComponent() => builder =>
+    {
+        int renderctr = 0;
+        int Ctr = 0;
+        string Mediacolor = "M20 13C18.3221 13 16.7514 13.4592 15.4068 14.2587C16.5908 15.6438 17.5269 17.2471 18.1465 19H20V13ZM16.0037 19C14.0446 14.3021 9.4079 11 4 11V19H16.0037ZM4 9C7.82914 9 11.3232 10.4348 13.9738 12.7961C15.7047 11.6605 17.7752 11 20 11V3H21.0082C21.556 3 22 3.44495 22 3.9934V20.0066C22 20.5552 21.5447 21 21.0082 21H2.9918C2.44405 21 2 20.5551 2 20.0066V3.9934C2 3.44476 2.45531 3 2.9918 3H6V1H8V5H4V9ZM18 1V5H10V3H16V1H18ZM16.5 10C15.6716 10 15 9.32843 15 8.5C15 7.67157 15.6716 7 16.5 7C17.3284 7 18 7.67157 18 8.5C18 9.32843 17.3284 10 16.5 10Z";
+        foreach (LogModel Obj in LogCtrl)
+        {
+            string directoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "DLogBookMedia");
+            if (Directory.Exists(directoryPath))
+            {
+                string[] files = Directory.GetFiles(directoryPath);
+                string[] value = Array.FindAll(files, element => element.Contains(Obj.SubParam));//Obj.SubDetId
+                string NoAttch = "M20 13C18.3221 13 16.7514 13.4592 15.4068 14.2587C16.5908 15.6438 17.5269 17.2471 18.1465 19H20V13ZM16.0037 19C14.0446 14.3021 9.4079 11 4 11V19H16.0037ZM4 9C7.82914 9 11.3232 10.4348 13.9738 12.7961C15.7047 11.6605 17.7752 11 20 11V3H21.0082C21.556 3 22 3.44495 22 3.9934V20.0066C22 20.5552 21.5447 21 21.0082 21H2.9918C2.44405 21 2 20.5551 2 20.0066V3.9934C2 3.44476 2.45531 3 2.9918 3H6V1H8V5H4V9ZM18 1V5H10V3H16V1H18ZM16.5 10C15.6716 10 15 9.32843 15 8.5C15 7.67157 15.6716 7 16.5 7C17.3284 7 18 7.67157 18 8.5C18 9.32843 17.3284 10 16.5 10Z";
+                string Attch = "M17.409 19C16.633 16.6012 15.1323 15.1147 13.1434 13.3979C15.0238 11.8971 17.4071 11 20 11V3H21.0082C21.556 3 22 3.44495 22 3.9934V20.0066C22 20.5552 21.5447 21 21.0082 21H2.9918C2.44405 21 2 20.5551 2 20.0066V3.9934C2 3.44476 2.45531 3 2.9918 3H6V1H8V5H4V12C9.22015 12 13.6618 14.4616 15.3127 19H17.409ZM18 1V5H10V3H16V1H18ZM16.5 10C15.6716 10 15 9.32843 15 8.5C15 7.67157 15.6716 7 16.5 7C17.3284 7 18 7.67157 18 8.5C18 9.32843 17.3284 10 16.5 10Z";
+                Mediacolor = (value.Length > 0 ? Attch : NoAttch);
+                //Mediacolor = (value.Length > 0 ? "blue" : "currentColor");
+            }
+
+            builder.OpenElement(renderctr++, "div");
+            builder.AddAttribute(renderctr++, "Class", "card param-card");//inline-form-field-btns row
+            builder.AddAttribute(renderctr++, "style", "margin-bottom:6px;");
+            builder.OpenElement(renderctr++, "div");
+            builder.AddAttribute(renderctr++, "Class", "param-row");
+
+            builder.OpenElement(renderctr++, "div");
+            builder.AddAttribute(renderctr++, "Class", "param-field");
+            if (Obj.DataType == "D") // Date
+            {
+                builder.OpenComponent(renderctr++, typeof(SfDatePicker<DateTime>));
+                builder.AddAttribute(renderctr++, "style", "text-align: left;");
+                builder.AddAttribute(renderctr++, "ID", "Test" + Ctr.ToString());
+                builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
+                builder.AddAttribute(renderctr++, "Readonly", Global.IsReadOnly);
+                builder.AddAttribute(renderctr++, "Value", Obj.DateVal);
+                // builder.AddAttribute(renderctr++, "ChildContent", (Microsoft.AspNetCore.Components.RenderFragment)((builder2) =>
+                // {
+                //     builder2.AddMarkupContent(renderctr++, "\r    ");
+
+                //     builder2.OpenComponent<Syncfusion.Blazor.Calendars.DatePickerEvents<DateTime>>(renderctr++);
+                //     builder2.AddAttribute(renderctr++, "ValueChange", EventCallback.Factory.Create<Syncfusion.Blazor.Calendars.ChangedEventArgs<DateTime>>(this, args =>
+                //     {
+                //         Obj.DateVal = Obj.DateCtrl.Value;
+                //     }));
+
+                //     builder2.CloseComponent();
+                //     builder2.AddMarkupContent(renderctr++, "\r");
+                // }));
+                // builder.AddAttribute(renderctr++, "onclick", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, args => Clicked(args, Obj)));
+
+                builder.AddComponentReferenceCapture(renderctr++, inst => { Obj.DateCtrl = (SfDatePicker<DateTime>)inst; });
+                builder.CloseComponent();
+            }
+            else if (Obj.DataType == "E") // Textbox
+            {
+                builder.OpenComponent(renderctr++, typeof(SfTextBox));
+                builder.AddAttribute(renderctr++, "ID", "Test" + Ctr.ToString());
+                builder.AddAttribute(renderctr++, "style", "text-align: left;");
+                builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
+                builder.AddAttribute(renderctr++, "FloatLabelType", FloatLabelType.Always);
+                builder.AddAttribute(renderctr++, "Readonly", Global.IsReadOnly);
+                builder.AddAttribute(renderctr++, "Value", Obj.StrVal);
+                builder.AddAttribute(renderctr++, "ValueChange", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Syncfusion.Blazor.Inputs.ChangedEventArgs>(this, args =>
+            {
+                Obj.StrVal = Obj.TextCtrl.Value;
+            }));
+                // builder.AddAttribute(renderctr++, "onclick", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, args => Clicked(args, Obj)));
+                builder.AddAttribute(renderctr++, "Input", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Syncfusion.Blazor.Inputs.InputEventArgs>(this, args => InputHandler(args, Obj, "S")));
+                builder.AddAttribute(renderctr++, "onkeypress", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.KeyboardEventArgs>(this, args => KeyPressed(Obj)));
+                builder.AddComponentReferenceCapture(renderctr++, inst => { Obj.TextCtrl = (SfTextBox)inst; });
+                builder.CloseComponent();
+            }
+            else if (Obj.DataType == "T") // Time
+            {
+                builder.OpenComponent(renderctr++, typeof(SfTimePicker<TimeOnly>));
+                builder.AddAttribute(renderctr++, "ID", "Test" + Ctr.ToString());
+                builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
+                builder.AddAttribute(renderctr++, "FloatLabelType", FloatLabelType.Always);
+                builder.AddAttribute(renderctr++, "Value", Obj.TimeVal);
+                builder.AddAttribute(renderctr++, "Readonly", Global.IsReadOnly);
+                builder.AddAttribute(renderctr++, "Format", "HH:mm");
+                builder.AddAttribute(renderctr++, "ChildContent", (Microsoft.AspNetCore.Components.RenderFragment)((builder2) =>
+            {
+                builder2.AddMarkupContent(renderctr++, "\r    ");
+                builder2.OpenComponent<Syncfusion.Blazor.Calendars.TimePickerEvents<TimeOnly>>(renderctr++);
+                builder2.AddAttribute(renderctr++, "ValueChange", EventCallback.Factory.Create<Syncfusion.Blazor.Calendars.ChangeEventArgs<TimeOnly>>(this, args =>
+            {
+                Obj.TimeVal = Obj.TimeCtrl.Value;
+                KeyPressed(Obj);
+            }));
+                builder2.CloseComponent();
+                builder2.AddMarkupContent(renderctr++, "\r");
+            }));
+                builder.AddComponentReferenceCapture(renderctr++, inst => { Obj.TimeCtrl = (SfTimePicker<TimeOnly>)inst; });
+                builder.CloseComponent();
+            }
+            else if (Obj.DataType == "N") // Number
+            {
+                // builder.OpenComponent(renderctr++, typeof(SfNumericTextBox<double>));
+                // builder.AddAttribute(renderctr++, "ID", "Test" + Ctr.ToString());
+                // builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName + " " + Obj.Range);
+                // builder.AddAttribute(renderctr++, "FloatLabelType", FloatLabelType.Always);
+                // builder.AddAttribute(renderctr++, "ShowSpinButton", false);
+                // builder.AddAttribute(renderctr++, "inputmode", "numeric");
+                // if (double.Parse(Obj.MaxVal) + double.Parse(Obj.MinVal) != 0)
+                // {
+                //     builder.AddAttribute(renderctr++, "Max", double.Parse(Obj.MaxVal));
+                //     builder.AddAttribute(renderctr++, "Min", double.Parse(Obj.MinVal));
+                // }
+                // builder.AddAttribute(renderctr++, "Value", Obj.DoubleVal);
+                // builder.AddAttribute(renderctr++, "ChildContent", (Microsoft.AspNetCore.Components.RenderFragment)((builder2) =>
+                // {
+                //     builder2.OpenComponent<Syncfusion.Blazor.Inputs.NumericTextBoxEvents<double>>(6);
+                //     builder2.AddAttribute(renderctr++, "ValueChange", EventCallback.Factory.Create<Syncfusion.Blazor.Inputs.ChangeEventArgs<double>>(this, args => ValueChange(Obj)));
+                //     builder2.CloseComponent();
+                // }));
+                // // builder.AddAttribute(renderctr++, "style", @ColorVal);
+                // builder.AddAttribute(renderctr++, "onkeypress", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.KeyboardEventArgs>(this, args => KeyPressed(Obj)));
+                // if (AddStyleContent != null)
+                // {
+                //     AddStyleContent(builder);
+                //     AddStyleContent = null;
+                // }
+                // builder.AddComponentReferenceCapture(renderctr++, inst => { Obj.DoubleNumberCtrl = (SfNumericTextBox<double>)inst; });
+                // builder.CloseComponent();
+                builder.OpenComponent(renderctr++, typeof(SfTextBox));
+                builder.AddAttribute(renderctr++, "ID", "Test" + Ctr.ToString());
+                // builder.AddAttribute(renderctr++, "CssClass", "right");
+                builder.AddAttribute(renderctr++, "Type", InputType.Number);
+                //builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName + " " + Obj.Range);
+                builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
+                builder.AddAttribute(renderctr++, "FloatLabelType", FloatLabelType.Always);
+                builder.AddAttribute(renderctr++, "Readonly", Global.IsReadOnly);
+                if (double.Parse(Obj.MaxVal) + double.Parse(Obj.MinVal) != 0)
+                {
+                    builder.AddAttribute(renderctr++, "Max", double.Parse(Obj.MaxVal));
+                    builder.AddAttribute(renderctr++, "Min", double.Parse(Obj.MinVal));
+                }
+                builder.AddAttribute(renderctr++, "Value", Obj.StrVal);
+                builder.AddAttribute(renderctr++, "ValueChange", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Syncfusion.Blazor.Inputs.ChangedEventArgs>(this, args => ValueChange(Obj)));
+                builder.AddAttribute(renderctr++, "onkeypress", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.KeyboardEventArgs>(this, args => KeyPressed(Obj)));
+                //builder.AddAttribute(renderctr++, "Input", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Syncfusion.Blazor.Inputs.InputEventArgs>(this, args => InputHandler(args, Obj, "N")));
+                if (AddStyleContent != null && ParamName.ToLower() == Obj.PDispName.ToLower())
+                {
+                    AddStyleContent(builder);
+                    AddStyleContent = null;
+                    //FormatString = "";
+                }
+                builder.AddComponentReferenceCapture(renderctr++, inst => { Obj.TextCtrl = (SfTextBox)inst; });
+                builder.CloseComponent();
+            }
+            else if (Obj.DataType == "C") // Combo
+            {
+                //string sep = "\t";
+                string sep = "/";
+                List<string> List = Obj.Range.Split(sep.ToCharArray()).ToList();
+
+                builder.OpenComponent(renderctr++, typeof(SfDropDownList<string, string>));
+                builder.AddAttribute(renderctr++, "style", "text-align: left;");
+                builder.AddAttribute(renderctr++, "ID", "Test" + Ctr.ToString());
+                builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
+                builder.AddAttribute(renderctr++, "FloatLabelType", FloatLabelType.Always);
+                builder.AddAttribute(renderctr++, "DataSource", List);
+                builder.AddAttribute(renderctr++, "Readonly", Global.IsReadOnly);
+                builder.AddAttribute(renderctr++, "ChildContent", (Microsoft.AspNetCore.Components.RenderFragment)((builder2) =>
+            {
+                builder2.OpenComponent<Syncfusion.Blazor.DropDowns.DropDownListEvents<string, string>>(renderctr++);
+                builder2.AddAttribute(renderctr++, "OnValueSelect", EventCallback.Factory.Create<Syncfusion.Blazor.DropDowns.SelectEventArgs<string>>(this, args =>
+            {
+                Obj.DropDownVal = Obj.DropdownCtrl.Value;
+                ParamName = Obj.PDispName;
+                // Obj.LogDate = DateTime.Now.ToString("MM/dd/yyyy");
+                Obj.LogDate = DateTime.Now.ToString("dd/MM/yyyy");
+                Obj.LogTime = DateTime.Now.ToString("HH:mm");
+                Obj.LogLabel = " Log Date Time : " + Obj.LogDate + " " + Obj.LogTime;
+            }));
+                builder2.CloseComponent();
+            }));
+                builder.AddComponentReferenceCapture(renderctr++, inst => { Obj.DropdownCtrl = (SfDropDownList<string, string>)inst; });
+                builder.CloseComponent();
+            }
+            builder.CloseElement();
+
+            /*DIV1 Complete*/
+            builder.OpenElement(renderctr++, "div");
+            builder.AddAttribute(renderctr++, "Class", "param-icon dropdown");
+            builder.OpenElement(renderctr++, "a");
+            builder.AddAttribute(renderctr++, "class", "icon");
+            builder.AddAttribute(renderctr++, "data-bs-toggle", "dropdown");
+            builder.AddAttribute(renderctr++, "aria-expanded", "false");
+            builder.OpenElement(renderctr++, "svg");
+            builder.AddAttribute(renderctr++, "xmlns", "http://www.w3.org/2000/svg");
+            builder.AddAttribute(renderctr++, "viewBox", "0 0 24 24");
+            builder.AddAttribute(renderctr++, "width", "24");
+            builder.AddAttribute(renderctr++, "height", "24");
+            builder.AddAttribute(renderctr++, "fill", "currentColor");
+            builder.OpenElement(renderctr++, "path");
+            builder.AddAttribute(renderctr++, "d", "M14 13.5V8C14 5.79086 12.2091 4 10 4C7.79086 4 6 5.79086 6 8V13.5C6 17.0899 8.91015 20 12.5 20C16.0899 20 19 17.0899 19 13.5V4H21V13.5C21 18.1944 17.1944 22 12.5 22C7.80558 22 4 18.1944 4 13.5V8C4 4.68629 6.68629 2 10 2C13.3137 2 16 4.68629 16 8V13.5C16 15.433 14.433 17 12.5 17C10.567 17 9 15.433 9 13.5V8H11V13.5C11 14.3284 11.6716 15 12.5 15C13.3284 15 14 14.3284 14 13.5Z");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.OpenElement(renderctr++, "ul");
+            builder.AddAttribute(renderctr++, "class", "dropdown-menu");
+            builder.AddAttribute(renderctr++, "aria-labelledby", "dropdownMenuButton1");
+            /*li 1*/
+            builder.OpenElement(renderctr++, "li");
+            builder.OpenElement(renderctr++, "button");
+            builder.AddAttribute(renderctr++, "class", "dropdown-item");
+            builder.AddAttribute(renderctr++, "onclick", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, args => PickPhotoClick(args, Obj, "Pick Photo")));
+            builder.OpenElement(renderctr++, "svg");
+            builder.AddAttribute(renderctr++, "xmlns", "http://www.w3.org/2000/svg");
+            //builder.AddAttribute(renderctr++, "style", "margin-top: 25px");
+            builder.AddAttribute(renderctr++, "viewBox", "0 0 22 22");
+            builder.AddAttribute(renderctr++, "width", "22");
+            builder.AddAttribute(renderctr++, "height", "22");
+            builder.AddAttribute(renderctr++, "fill", "currentColor");
+            builder.OpenElement(renderctr++, "path");
+            builder.AddAttribute(renderctr++, "d", "M2.9918 21C2.44405 21 2 20.5551 2 20.0066V3.9934C2 3.44476 2.45531 3 2.9918 3H21.0082C21.556 3 22 3.44495 22 3.9934V20.0066C22 20.5552 21.5447 21 21.0082 21H2.9918ZM20 15V5H4V19L14 9L20 15ZM20 17.8284L14 11.8284L6.82843 19H20V17.8284ZM8 11C6.89543 11 6 10.1046 6 9C6 7.89543 6.89543 7 8 7C9.10457 7 10 7.89543 10 9C10 10.1046 9.10457 11 8 11Z");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.OpenElement(renderctr++, "span");
+            builder.AddAttribute(renderctr++, "style", "margin-left: 10px;");
+            builder.AddContent(renderctr++, "Pick Photo");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.CloseElement();
+            /*li 2*/
+            builder.OpenElement(renderctr++, "li");
+            builder.OpenElement(renderctr++, "button");
+            builder.AddAttribute(renderctr++, "class", "dropdown-item");
+            builder.AddAttribute(renderctr++, "onclick", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, args => PickPhotoClick(args, Obj, "Pick Video")));
+            builder.OpenElement(renderctr++, "svg");
+            builder.AddAttribute(renderctr++, "xmlns", "http://www.w3.org/2000/svg");
+            builder.AddAttribute(renderctr++, "viewBox", "0 0 22 22");
+            builder.AddAttribute(renderctr++, "width", "22");
+            builder.AddAttribute(renderctr++, "height", "22");
+            builder.AddAttribute(renderctr++, "fill", "currentColor");
+            builder.OpenElement(renderctr++, "path");
+            builder.AddAttribute(renderctr++, "d", "M3 3.9934C3 3.44476 3.44495 3 3.9934 3H20.0066C20.5552 3 21 3.44495 21 3.9934V20.0066C21 20.5552 20.5551 21 20.0066 21H3.9934C3.44476 21 3 20.5551 3 20.0066V3.9934ZM5 5V19H19V5H5ZM10.6219 8.41459L15.5008 11.6672C15.6846 11.7897 15.7343 12.0381 15.6117 12.2219C15.5824 12.2658 15.5447 12.3035 15.5008 12.3328L10.6219 15.5854C10.4381 15.708 10.1897 15.6583 10.0672 15.4745C10.0234 15.4088 10 15.3316 10 15.2526V8.74741C10 8.52649 10.1791 8.34741 10.4 8.34741C10.479 8.34741 10.5562 8.37078 10.6219 8.41459Z");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.OpenElement(renderctr++, "span");
+            builder.AddAttribute(renderctr++, "style", "margin-left: 10px;");
+            builder.AddContent(renderctr++, "Pick Video");
+            //builder.AddContent(renderctr++, "Capture Video");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.CloseElement();
+            /*li 3*/
+            builder.OpenElement(renderctr++, "li");
+            builder.OpenElement(renderctr++, "button");
+            builder.AddAttribute(renderctr++, "class", "dropdown-item");
+            builder.AddAttribute(renderctr++, "onclick", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, args => PickPhotoClick(args, Obj, "Capture Photo")));
+            builder.OpenElement(renderctr++, "svg");
+            builder.AddAttribute(renderctr++, "xmlns", "http://www.w3.org/2000/svg");
+            builder.AddAttribute(renderctr++, "viewBox", "0 0 22 22");
+            builder.AddAttribute(renderctr++, "width", "22");
+            builder.AddAttribute(renderctr++, "height", "22");
+            builder.AddAttribute(renderctr++, "fill", "currentColor");
+            builder.OpenElement(renderctr++, "path");
+            builder.AddAttribute(renderctr++, "d", "M2 6.00087C2 5.44811 2.45531 5 2.9918 5H21.0082C21.556 5 22 5.44463 22 6.00087V19.9991C22 20.5519 21.5447 21 21.0082 21H2.9918C2.44405 21 2 20.5554 2 19.9991V6.00087ZM4 7V19H20V7H4ZM14 16C15.6569 16 17 14.6569 17 13C17 11.3431 15.6569 10 14 10C12.3431 10 11 11.3431 11 13C11 14.6569 12.3431 16 14 16ZM14 18C11.2386 18 9 15.7614 9 13C9 10.2386 11.2386 8 14 8C16.7614 8 19 10.2386 19 13C19 15.7614 16.7614 18 14 18ZM4 2H10V4H4V2Z");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.OpenElement(renderctr++, "span");
+            builder.AddAttribute(renderctr++, "style", "margin-left: 10px;");
+            builder.AddContent(renderctr++, "Capture Photo");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.CloseElement();
+            /*li 4*/
+            builder.OpenElement(renderctr++, "li");
+            builder.OpenElement(renderctr++, "button");
+            builder.AddAttribute(renderctr++, "class", "dropdown-item");
+            builder.AddAttribute(renderctr++, "onclick", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, args => PickPhotoClick(args, Obj, "Capture Video")));
+            builder.OpenElement(renderctr++, "svg");
+            builder.AddAttribute(renderctr++, "xmlns", "http://www.w3.org/2000/svg");
+            builder.AddAttribute(renderctr++, "viewBox", "0 0 22 22");
+            builder.AddAttribute(renderctr++, "width", "22");
+            builder.AddAttribute(renderctr++, "height", "22");
+            builder.AddAttribute(renderctr++, "fill", "currentColor");
+            builder.OpenElement(renderctr++, "path");
+            builder.AddAttribute(renderctr++, "d", "M17 9.2L22.2133 5.55071C22.4395 5.39235 22.7513 5.44737 22.9096 5.6736C22.9684 5.75764 23 5.85774 23 5.96033V18.0397C23 18.3158 22.7761 18.5397 22.5 18.5397C22.3974 18.5397 22.2973 18.5081 22.2133 18.4493L17 14.8V19C17 19.5523 16.5523 20 16 20H2C1.44772 20 1 19.5523 1 19V5C1 4.44772 1.44772 4 2 4H16C16.5523 4 17 4.44772 17 5V9.2ZM17 12.3587L21 15.1587V8.84131L17 11.6413V12.3587ZM3 6V18H15V6H3Z");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.OpenElement(renderctr++, "span");
+            builder.AddAttribute(renderctr++, "style", "margin-left: 10px;");
+            builder.AddContent(renderctr++, "Capture Video");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.CloseElement();
+
+
+            builder.CloseElement();
+            builder.CloseElement();
+            /*DIV1 Complete*/
+
+            builder.OpenElement(renderctr++, "div");
+            builder.AddAttribute(renderctr++, "Class", "param-icon");
+            builder.OpenElement(renderctr++, "a");
+            builder.AddAttribute(renderctr++, "class", "icon");
+            builder.AddAttribute(renderctr++, "onclick", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, args => GetMedia(Obj)));
+            builder.OpenElement(renderctr++, "svg");
+            builder.AddAttribute(renderctr++, "xmlns", "http://www.w3.org/2000/svg");
+            builder.AddAttribute(renderctr++, "viewBox", "0 0 24 24");
+            builder.AddAttribute(renderctr++, "width", "24");
+            builder.AddAttribute(renderctr++, "height", "24");
+            builder.AddAttribute(renderctr++, "fill", "currentColor");//"currentColor"
+            builder.OpenElement(renderctr++, "path");
+            builder.AddAttribute(renderctr++, "d", Mediacolor);
+            //builder.AddAttribute(renderctr++, "d", "M20 13C18.3221 13 16.7514 13.4592 15.4068 14.2587C16.5908 15.6438 17.5269 17.2471 18.1465 19H20V13ZM16.0037 19C14.0446 14.3021 9.4079 11 4 11V19H16.0037ZM4 9C7.82914 9 11.3232 10.4348 13.9738 12.7961C15.7047 11.6605 17.7752 11 20 11V3H21.0082C21.556 3 22 3.44495 22 3.9934V20.0066C22 20.5552 21.5447 21 21.0082 21H2.9918C2.44405 21 2 20.5551 2 20.0066V3.9934C2 3.44476 2.45531 3 2.9918 3H6V1H8V5H4V9ZM18 1V5H10V3H16V1H18ZM16.5 10C15.6716 10 15 9.32843 15 8.5C15 7.67157 15.6716 7 16.5 7C17.3284 7 18 7.67157 18 8.5C18 9.32843 17.3284 10 16.5 10Z");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.CloseElement();
+
+
+            builder.OpenElement(renderctr++, "div");
+            builder.AddAttribute(renderctr++, "Class", "param-icon");
+            builder.OpenElement(renderctr++, "a");
+            builder.AddAttribute(renderctr++, "class", "icon");
+            builder.AddAttribute(renderctr++, "onclick", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, args => ShowBtn(Obj)));
+            builder.OpenElement(renderctr++, "svg");
+            builder.AddAttribute(renderctr++, "xmlns", "http://www.w3.org/2000/svg");
+            builder.AddAttribute(renderctr++, "viewBox", "0 0 24 24");
+            builder.AddAttribute(renderctr++, "width", "24");
+            builder.AddAttribute(renderctr++, "height", "24");
+            builder.AddAttribute(renderctr++, "fill", "currentColor");
+            builder.OpenElement(renderctr++, "path");
+            builder.AddAttribute(renderctr++, "d", "M12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12H4C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C9.53614 4 7.33243 5.11383 5.86492 6.86543L8 9H2V3L4.44656 5.44648C6.28002 3.33509 8.9841 2 12 2ZM13 7L12.9998 11.585L16.2426 14.8284L14.8284 16.2426L10.9998 12.413L11 7H13Z");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.CloseElement();
+
+            builder.CloseElement();
+
+
+            builder.OpenElement(renderctr++, "div");
+            builder.AddAttribute(renderctr++, "class", "param-messege-row");
+            builder.AddAttribute(renderctr++, "style", "display: " + (Obj.LogShow ? "none " : " "));
+            builder.OpenElement(renderctr++, "div");
+            builder.AddAttribute(renderctr++, "class", "inline-form-item param-messege");
+            builder.OpenElement(renderctr++, "label");
+            builder.AddAttribute(renderctr++, "style", "color:blue;");
+            builder.AddContent(renderctr++, Obj.LogLabel);
+            builder.CloseElement();
+
+            builder.CloseElement();
+
+            builder.OpenElement(renderctr++, "div");
+            builder.AddAttribute(renderctr++, "class", "inline-form-item param-messege-close");
+            builder.AddAttribute(renderctr++, "onclick", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, args => HideBtn(Obj)));
+            builder.OpenElement(renderctr++, "svg");
+            builder.AddAttribute(renderctr++, "xmlns", "http://www.w3.org/2000/svg");
+            builder.AddAttribute(renderctr++, "viewBox", "0 0 24 24");
+            builder.AddAttribute(renderctr++, "width", "20");
+            builder.AddAttribute(renderctr++, "height", "20");
+            builder.AddAttribute(renderctr++, "fill", "rgba(255,0,0,1)");
+            builder.OpenElement(renderctr++, "path");
+            builder.AddAttribute(renderctr++, "d", "M11.9997 10.5865L16.9495 5.63672L18.3637 7.05093L13.4139 12.0007L18.3637 16.9504L16.9495 18.3646L11.9997 13.4149L7.04996 18.3646L5.63574 16.9504L10.5855 12.0007L5.63574 7.05093L7.04996 5.63672L11.9997 10.5865Z");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.CloseElement();
+
+            builder.CloseElement();
+            Ctr++;
+        }
+    };
+
+
+    private async void OnOpenHandler(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
+    {
+        await DialogService.AlertAsync("Button is clicked", CoreVars.APPDATAMANAGER);
+    }
+    private void InputHandler(InputEventArgs args, LogModel model, string DataType)
+    {
+        model.StrVal = args.Value;
+        model.TextCtrl.Value = args.Value;
+        KeyPressed(model);
+        if(DataType == "N")
+        {
+            ValueChange(model);
+        }
+    }
+
+    public async void KeyPressed(LogModel model)
+    {
+        ParamName = model.PDispName;
+        if (ParamName.ToLower() == model.PDispName.ToLower())
+        {            
+            model.LogDate = DateTime.Now.ToString("dd/MM/yyyy");
+            model.LogTime = DateTime.Now.ToString("HH:mm");            
+        }
+        StateHasChanged();
+    }
+    private async Task ShowBtn(LogModel model)
+    {
+        model.LogLabel = " Log Date Time : " + model.LogDate + " " + model.LogTime;
+        model.LogShow = false; 
+    }
+
+    private async Task HideBtn(LogModel model)
+    {
+        model.LogShow = true;
+    }
+
+    private async Task ShowOption(LogModel model)
+    {
+        model.OptionShow = false;
+    }
+
+    private async Task HideOption(LogModel model)
+    {
+        model.OptionShow = true;
+    }
+
+
+    public async void ValueChange(LogModel model)
+    {
+        model.StrVal = model.TextCtrl.Value;
+        ParamName = model.PDispName;
+        if (ParamName.ToLower() == model.PDispName.ToLower())
+        {
+            model.LogDate = DateTime.Now.ToString("dd/MM/yyyy");
+            model.LogTime = DateTime.Now.ToString("HH:mm");
+        }
+        FormatString = "";
+
+        model.FormatStr = FormatString;           
+        if (!string.IsNullOrEmpty(model.StrVal))
+        {
+            if (double.Parse(model.MinVal) != 0)
+            {
+                if (double.Parse(model.StrVal) < double.Parse(model.MinVal))
+                {                    
+                    //FormatString += "background-color:#FF0000;";
+                    FormatString += "color:#FF0000;";
+                }
+            }
+            if (double.Parse(model.MaxVal) != 0)
+            {
+                if (double.Parse(model.StrVal) > double.Parse(model.MaxVal))
+                {                    
+                    //FormatString += "background-color:#FF0000;";
+                    FormatString += "color:#FF0000;";
+                }
+            }
+            
+            StyleAttributes = new Dictionary<string, object>()
+            {
+                { "style", FormatString }
+            };
+            AddStyleContent = builder => builder.AddMultipleAttributes(5, StyleAttributes);
+            StateHasChanged();            
+        }
+        // if (!string.IsNullOrEmpty(FormatString))
+        // {
+        //     OpenTaskDialog();
+        // }
+    }
+    public async void SaveData()
+    {
+        DevParamDet ToSaveObj;
+
+        foreach (LogModel model in LogCtrl)
+        {
+            ToSaveObj = new DevParamDet();
+            ToSaveObj.Id = model.Id;
+            ToSaveObj.Sheet = model.Sheet;
+            ToSaveObj.GrpName = model.GrpName;
+            ToSaveObj.SubParam = model.SubParam;
+            ToSaveObj.SubDetId = model.SubDetId;
+            ToSaveObj.Shift = model.Shift;
+            ToSaveObj.Unit = model.Unit;
+            ToSaveObj.Range = model.Range;
+            ToSaveObj.MinVal = model.MinVal;
+            ToSaveObj.MaxVal = model.MaxVal;
+            ToSaveObj.FixVal = model.FixVal;
+            ToSaveObj.ParamData = model.ParamData;
+            ToSaveObj.DataType = model.DataType;
+            ToSaveObj.PDispName = model.PDispName;
+            ToSaveObj.GDispName = model.GDispName;
+            ToSaveObj.RowNo = model.RowNo;
+            ToSaveObj.SNAME = model.SNAME;
+            ToSaveObj.SSHIFT = model.SSHIFT;
+            ToSaveObj.SDATE = model.SDATE;
+            ToSaveObj.SUSER = model.SUSER;
+            ToSaveObj.LogDate = model.LogDate;
+            ToSaveObj.LogTime = model.LogTime;
+            // ToSaveObj.FormatStr = model.FormatStr;
+            if (model.DataType == "C")
+            {
+                ToSaveObj.ParamData = model.DropdownCtrl.Value;
+            }
+            else if (model.DataType == "E")
+            {
+                ToSaveObj.ParamData = model.TextCtrl.Value;
+            }
+            else if (model.DataType == "N")
+            {
+                ToSaveObj.ParamData = model.TextCtrl.Value.ToString();
+            }
+            else if (model.DataType == "D")
+            {
+                ToSaveObj.ParamData = model.DateCtrl.Value.ToString();
+            }
+            else if (model.DataType == "T")
+            {
+                string TimeVal = model.TimeCtrl.Value.ToString("HH:mm");
+                ToSaveObj.ParamData = TimeVal;//model.TimeCtrl.Value.ToString();
+            }
+            Success = await _context.UpdateItemAsync<DevParamDet>(ToSaveObj);
+        }
+        if (Success)
+        {
+            await DialogService.AlertAsync("Data Updated Successfully.", CoreVars.APPDATAMANAGER);
+            //await GroupScanner();
+            //Navmanage.NavigateTo("/sheetgrp");
+            Global.IsReadOnly = false;
+            Navmanage.NavigateTo("/QRScan");
+        }
+        else
+        {
+            await DialogService.AlertAsync("Data Not Updated.", CoreVars.EXERROR);
+        }
+    }
+    public async Task GroupScanner()
+    {
+        Global.IsReadOnly = false;
+        VisibleProperty = true;
+        try
+        {
+            await Task.Yield();
+            string SheetGrpName;
+            SheetGrpName = await DialogService.PromptAsync("Enter Group Name:", CoreVars.APPMANAGER);
+            if (!string.IsNullOrEmpty(SheetGrpName))
+            {
+                var parts = SheetGrpName.Split('_', 2);
+                if (parts.Length > 0)
+                {
+                    Global.Sheet = parts[0];
+                }
+                if (parts.Length > 1)
+                {
+                    Global.SheetGrp = parts[1];
+                }
+
+                if (!string.IsNullOrEmpty(Global.Sheet) && !string.IsNullOrEmpty(Global.SheetGrp))
+                {
+                    Expression<Func<DevParamDet, bool>> predicare2 = GrpData => (GrpData.Sheet == Global.Sheet && GrpData.GrpName == Global.SheetGrp);
+                    var GrpNameData = await _context.GetFileteredAsync(predicare2);
+                    int EmptyPrmCnt = GrpNameData.Count();
+                    if (EmptyPrmCnt > 0)
+                    {
+                        Navmanage.NavigateTo("/parameter",true);
+                    }
+                    else
+                    {
+                        await DialogService.AlertAsync("Group Not Found.", CoreVars.EXERROR);
+                    }
+                }
+                else
+                {
+                    await DialogService.AlertAsync("Group is Empty.", CoreVars.EXERROR);
+                }
+            }
+            VisibleProperty = false;
+        }
+        catch (Exception ex)
+        {
+            await DialogService.AlertAsync("GroupScanner => " + ex.Message, CoreVars.EXERROR);
+            VisibleProperty = false;
+        }
+        VisibleProperty = false;
+       // StateHasChanged();
+    }
+    public async Task  DisplayData()
+    {
+        foreach (var data in ParamDet)
+        {
+            var Obj = LogCtrl.FirstOrDefault(o => o.SubParam == data.SubParam && o.Sheet == data.Sheet && o.GrpName == data.GrpName);
+            if (Obj != null) 
+            {
+                if (Obj.DataType == "C")
+                {                 
+                    Obj.DropdownCtrl.Value = string.IsNullOrEmpty(data.ParamData) ? "" : data.ParamData;                    
+                    Obj.DropDownVal = data.ParamData;
+                }
+                else if (Obj.DataType == "E")
+                {                  
+                    Obj.TextCtrl.Value = data.ParamData;
+                    Obj.StrVal = data.ParamData;
+                }
+                else if (Obj.DataType == "N")
+                {
+                    Obj.TextCtrl.Value = data.ParamData;
+                    // Obj.DoubleVal = double.Parse(data.ParamData);
+                    Obj.StrVal = data.ParamData;
+                }
+                else if (Obj.DataType == "D")
+                {                    
+                    Obj.DateCtrl.Value = DateTime.Parse(data.ParamData);
+                    Obj.DateVal = DateTime.Parse(data.ParamData);
+                }
+                else if (Obj.DataType == "T")
+                {                    
+                    Obj.TimeCtrl.Value = TimeOnly.Parse(data.ParamData);
+                    Obj.TimeVal = TimeOnly.Parse(data.ParamData);
+                }
+            }         
+        }
+    }
+
+    public async void PickPhotoClick(MouseEventArgs args, LogModel model, string attachName)
+    {
+        TakeMedia(model, attachName);
+        this.VisibleProperty = false;
+    }
+
+
+    public async void TakeMedia(LogModel model, string attachName)
+    {
+        this.VisibleProperty = true;
+        try
+        {
+            if (MediaPicker.Default.IsCaptureSupported)
+            {
+                string FileExtension = string.Empty;
+                FileResult photo = null;
+                if (attachName == "Pick Photo")
+                {
+                    FileExtension = ".jpg";
+                    photo = await MediaPicker.Default.PickPhotoAsync();
+                }
+                else if (attachName == "Pick Video")
+                {
+                    FileExtension = ".mp4";
+                    photo = await MediaPicker.Default.PickVideoAsync();
+                }
+                else if (attachName == "Capture Photo")
+                {
+                    FileExtension = ".jpg";
+                    photo = await MediaPicker.Default.CapturePhotoAsync();
+                }
+                else if (attachName == "Capture Video")
+                {
+                    FileExtension = ".mp4";
+                    photo = await MediaPicker.Default.CaptureVideoAsync();
+                }
+
+                if (photo != null)
+                {
+                    // Save the file into a specific directory
+                    //string directoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DLogBookMedia");
+
+                    string directoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "DLogBookMedia");
+                    if (!Directory.Exists(directoryPath))
+                    {
+                        Directory.CreateDirectory(directoryPath); // Create the directory if it doesn't exist
+                    }
+
+                    string fileName1 = $"{model.SubDetId}_{DateTime.Now:yyyyMMddHHmmss}{FileExtension}";
+                    string fileName = $"{model.SheetId}_{model.SubParam}_{DateTime.Now:ddMMyyHHmmss}{FileExtension}";
+                    string localFilePath = Path.Combine(directoryPath, fileName);
+                    using (Stream sourceStream = await photo.OpenReadAsync())
+                    {
+                        using (FileStream localFileStream = File.OpenWrite(localFilePath))
+                        {
+                            await sourceStream.CopyToAsync(localFileStream);
+                        }
+                    }
+
+                    await DialogService.AlertAsync("Data captured successfully.", CoreVars.APPDATAMANAGER);
+                }
+            }
+        }
+        catch(Exception ex)
+        {
+            await DialogService.AlertAsync("TakeMedia => "+ ex.InnerException, CoreVars.ERROR);
+        }
+        this.VisibleProperty = false;
+    }
+    // public string SubDetId = "";
+    // public async void DeleteMedia(string DetId)//List<LogModel> model
+    // {
+    //     bool isConfirm = await DialogService.ConfirmAsync("Are you sure to delete all images?", CoreVars.APPMANAGER);
+    //     if(isConfirm)
+    //     {
+    //         this.VisibleProperty = true;
+
+    //         string directoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "DLogBookMedia");
+    //         if (Directory.Exists(directoryPath))
+    //         {
+    //             string[] files = Directory.GetFiles(directoryPath);
+    //             string[] value = Array.FindAll(files, element => element.Contains(DetId));
+
+    //             if (value.Length > 0)
+    //             {
+    //                 foreach (string file in value)
+    //                 {
+    //                     if (File.Exists(file))
+    //                     {
+    //                         File.Delete(file);
+    //                     }
+    //                 }
+    //                 await DialogService.AlertAsync("Attachments deleted successfully.", CoreVars.APPDATAMANAGER);
+    //                 await CloseDialog();
+    //             }
+    //             else
+    //             {
+    //                 await DialogService.AlertAsync("No attachment found.", CoreVars.APPDATAMANAGER);
+    //             }
+
+    //             // foreach(LogModel logModel in model)
+    //             // {
+
+    //             //     string[] files1 = Directory.GetFiles(directoryPath, $"{logModel.SubDetId}_*");
+    //             //     foreach (string file in files1)
+    //             //     {
+    //             //         if (File.Exists(file))
+    //             //         {
+    //             //             File.Delete(file);
+    //             //         }
+    //             //     }
+    //             // }
+
+    //         }
+
+    //         this.VisibleProperty = false;
+
+    //     }
+    // }
+    public async void GetMedia(LogModel model)
+    {
+        this.VisibleProperty = true;
+        //string directoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapturedPhotos");
+        string directoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "DLogBookMedia");
+        if (Directory.Exists(directoryPath))
+        {
+            string[] files = Directory.GetFiles(directoryPath);
+            //string[] value = Array.FindAll(files, element => element.Contains(model.SubDetId));
+            string[] value = Array.FindAll(files, element => element.Contains(model.SubParam));
+
+            if (value.Length > 0)
+            {
+                await this.DialogRef.ShowAsync(true);
+                MediaDynamicRender = CreateMediaComponent(this, value, directoryPath);
+            }
+            else
+            {
+                await DialogService.AlertAsync("No attachment found.", CoreVars.APPDATAMANAGER);
+            }
+
+
+            //  foreach (var file in value)
+            // {
+            //     string localFilePath = Path.Combine(directoryPath, file);
+            //     string base64String = Convert.ToBase64String(File.ReadAllBytes(localFilePath));
+            //     VideoTag = "data:video/mp4;base64," + base64String;
+            // }
+
+            //     using (var fileStream = new FileStream(localFilePath, FileMode.Open))
+            //     {
+            //         using (var reader = new BinaryReader(fileStream))
+            //         {
+            //             var fileBytes = reader.ReadBytes((int)fileStream.Length);
+            //             imgfileBytes = fileBytes;
+            //         }
+            //     }
+            //     string base64String = Convert.ToBase64String(File.ReadAllBytes(localFilePath));
+            //     imgTag = "data:image/jpg;base64," + base64String;
+
+            // }
+
+        }
+        this.VisibleProperty = false;
+        StateHasChanged();
+    }
+
+    // public async void TakePhoto(string attachName)
+    // {
+    //     if (MediaPicker.Default.IsCaptureSupported)
+    //     {
+
+    //         try
+    //         {
+    //             FileResult photo = null;
+    //             if (attachName == "Pick Photo")
+    //             {
+    //                 photo = await MediaPicker.Default.PickPhotoAsync();
+    //             }
+    //             else if (attachName == "Pick Video")
+    //             {
+    //                 photo = await MediaPicker.Default.PickVideoAsync();
+    //             }
+    //             else if (attachName == "Capture Photo")
+    //             {
+    //                 photo = await MediaPicker.Default.CapturePhotoAsync();
+    //             }
+    //             else if (attachName == "Capture Video")
+    //             {
+    //                 photo = await MediaPicker.Default.CaptureVideoAsync();
+    //             }
+    //             var mediaPermissionStatus = await Permissions.CheckStatusAsync<Permissions.Media>();
+    //             var status = await Permissions.RequestAsync<Permissions.Camera>();
+    //             if (status != PermissionStatus.Granted)
+    //             {
+    //                 await DialogService.AlertAsync("No permission.", CoreVars.APPDATAMANAGER);
+    //                 return;
+    //             }
+    //             if (photo != null)
+    //             {
+    //                 // save the file into local storage
+    //                 string localFilePath = Path.Combine(FileSystem.CacheDirectory, photo.FileName);
+    //                 using Stream sourceStream = await photo.OpenReadAsync();
+    //                 using FileStream localFileStream = File.OpenWrite(localFilePath);
+    //                 await sourceStream.CopyToAsync(localFileStream);
+    //             }
+    //         }
+    //         catch (Exception ex)
+    //         {
+    //             await DialogService.AlertAsync("TakePhoto =>.", CoreVars.APPDATAMANAGER);
+    //         }
+    //     }
+    // }
+
+
+    public RenderFragment CreateMediaComponent(IComponent owner, string[] value, string directoryPath) => builder =>
+    {
+        int MediaCtr = 0;
+        string base64String = "";
+        builder.OpenElement(MediaCtr++, "div");
+        builder.AddAttribute(MediaCtr++, "class", "row row-cols-1 row-cols-md-2 g-4");
+        foreach (var file in value)
+        {
+            imgTag = "";
+            VideoTag = "";
+            string localFilePath = Path.Combine(directoryPath, file);
+            string FileExtension = Path.GetExtension(localFilePath);
+            string FileName = Path.GetFileNameWithoutExtension(localFilePath);//Path.GetFileName(localFilePath);
+
+            if (FileExtension == ".jpg")
+            {
+                if (!string.IsNullOrEmpty(localFilePath))
+                {
+                    if (File.Exists(localFilePath))
+                    {
+                        base64String = Convert.ToBase64String(File.ReadAllBytes(localFilePath));
+                        imgTag = "data:image/jpg;base64," + base64String;
+                    }
+                }   
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(localFilePath))
+                {
+                    if (File.Exists(localFilePath))
+                    {
+                        base64String = Convert.ToBase64String(File.ReadAllBytes(localFilePath));
+                        VideoTag = "data:video/mp4;base64," + base64String;
+                    }
+                    
+                }
+            }
+            
+            if (!string.IsNullOrEmpty(imgTag))
+            {
+                /*Image*/
+                builder.OpenElement(MediaCtr++, "div");
+                builder.AddAttribute(MediaCtr++, "class", "col");
+                builder.OpenElement(MediaCtr++, "div");
+                builder.AddAttribute(MediaCtr++, "class", "card");
+                builder.OpenElement(MediaCtr++, "img");
+                builder.AddAttribute(MediaCtr++, "src", imgTag);
+                builder.AddAttribute(MediaCtr++, "class", "card-img-top");
+                builder.CloseElement();
+
+                builder.OpenElement(MediaCtr++, "div");
+                builder.AddAttribute(MediaCtr++, "class", "card-body");
+                builder.OpenElement(MediaCtr++, "h6");
+                builder.AddAttribute(MediaCtr++, "class", "card-title");
+                builder.AddContent(MediaCtr++, FileName);
+                builder.CloseElement();
+                builder.CloseElement();
+
+                
+                builder.CloseElement();
+                builder.CloseElement();
+            }
+            if (!string.IsNullOrEmpty(VideoTag))
+            {
+                /*video*/
+                builder.OpenElement(MediaCtr++, "div");
+                builder.AddAttribute(MediaCtr++, "class", "col");
+                builder.OpenElement(MediaCtr++, "div");
+                builder.AddAttribute(MediaCtr++, "class", "card");
+                builder.OpenElement(MediaCtr++, "video");
+                builder.AddAttribute(MediaCtr++, "src", VideoTag);
+                builder.AddAttribute(MediaCtr++, "type", "video/mp4");
+                builder.AddAttribute(MediaCtr++, "controls", "controls");
+                builder.AddAttribute(MediaCtr++, "class", "card-img-top");
+                builder.CloseElement();
+                builder.OpenElement(MediaCtr++, "div");
+                builder.AddAttribute(MediaCtr++, "class", "card-body");
+                builder.OpenElement(MediaCtr++, "h6");
+                builder.AddAttribute(MediaCtr++, "class", "card-title");
+                builder.AddContent(MediaCtr++, FileName);
+                builder.CloseElement();
+                builder.CloseElement();
+
+                builder.CloseElement();
+                builder.CloseElement();
+            }            
+        }
+        builder.CloseElement();
+    };
+
+    private void  OpenDialog()
+    {        
+        this.IsVisible = true;
+    }
+
+    private void CloseDiag()
+    {
+        this.IsVisible = false;
+    }   
+
+    private async void CloseTaskDialog()
+    {
+        await TaskDialogRef.HideAsync();
+    }
+
+    private async void OpenTaskDialog()
+    {
+        await this.TaskDialogRef.ShowAsync(true);
+    }
+}

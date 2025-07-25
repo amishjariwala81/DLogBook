@@ -1,0 +1,372 @@
+﻿@page "/viewdata"
+
+@inject SfDialogService sfDialogService
+@inject NavigationManager Navmanage
+
+@using Newtonsoft.Json
+@using Syncfusion.Blazor.Popups
+@using System.Data
+@using JSCoreLibRazor
+@using DLogBook.Data
+@using SQLite
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Lists
+@using System.Linq.Expressions
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Buttons
+@using System.Reflection
+
+
+<div id="page" class="page">
+
+    <header class="header">
+        <div class="site-brand">
+            <img src="/Images/logo.png" />
+        </div>
+        <div class="header-title">
+            <h1>ViewData</h1>
+        </div>
+        <div class="header-icons">
+            <a class="icon" @onclick="HomeBtnClick">
+                <img src="/Images/icon-header-home.svg">
+            </a>
+            <a class="icon" href="#" data-bs-toggle="modal" data-bs-target="#exampleModalOne">
+                <img src="/Images/icon-header-exit.svg">
+            </a>
+        </div>
+    </header>
+
+    <section class="section content px-2">
+   
+        <div class="row">
+            @* <div class="col-sm-6">    *@
+                <div class="col-4">
+                    <SfRadioButton Label="Sheet Detail" Name="SheetDet" Value="SheetDet" TChecked="string" @onchange="FetchData" @bind-Checked="SelData"></SfRadioButton>
+                </div>
+                <div class="col-4">
+                    <SfRadioButton Label="User List" Name="ListofUserName" Value="ListofUserName" TChecked="string" @onchange="FetchData" @bind-Checked="SelData"></SfRadioButton>
+                </div>
+                <div class="col-4">
+                    <SfRadioButton Label="Parameter Detail" Name="DevParamDet" Value="DevParamDet" TChecked="string" @onchange="FetchData" @bind-Checked="SelData"></SfRadioButton>
+                </div>
+
+                @if (SelData == "DevParamDet")
+                {
+                    <div class="row">
+                        <div class="col-12">
+                            <SfDropDownList TValue="string" TItem="DropDownLst" Placeholder="Sheet" DataSource="@SheetList" FloatLabelType="FloatLabelType.Always">
+                                <DropDownListFieldSettings Value="Id" Text="Name"></DropDownListFieldSettings>
+                                <DropDownListEvents TValue="string" TItem="DropDownLst" ValueChange="OnValueChange"></DropDownListEvents>
+                            </SfDropDownList>
+                        </div>
+                    </div>
+                    <div class="row">
+                       <div class="col-10">
+                            <SfDropDownList TValue="string" TItem="DropDownLst" Placeholder="Sheet Group" DataSource="@GrpList" @bind-Value="@GrpVal" FloatLabelType="FloatLabelType.Always">
+                                <DropDownListFieldSettings Value="Id" Text="Name"></DropDownListFieldSettings>
+                            </SfDropDownList>
+                       </div>
+                       <div class="col-2">
+                            @* <a class="icon" style="margin-top:15px;" @onclick="ViewSheetData">
+                            
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(0,255,255,1)"><path d="M7 19V13H17V19H19V7.82843L16.1716 5H5V19H7ZM4 3H17L21 7V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3ZM9 15V19H15V15H9Z"></path></svg>
+                            </a> *@
+                        <SfButton IsPrimary="true" CssClass="btncls" OnClick="ViewSheetData">View</SfButton>
+                            @* <SfButton IsPrimary="true" CssClass="btncls" OnClick="ViewSheetData">View Data</SfButton> *@
+                       </div>
+                    </div>
+                }
+               
+            @* </div> *@
+           @*  <div class="col-sm-6">
+                <SfButton IsPrimary="true" CssClass="btncls" OnClick="FetchData">View Data</SfButton>
+            </div> *@
+        </div>
+        <div></div>
+        <div class="reports d-flex flex-column gap-1">
+            <div class="report">
+                <SfGrid @ref="DefaultGrid" DataSource="@lstObj" ID="Grid" GridLines="GridLine.Both"
+                        AllowResizing="true" Toolbar=@ToolbarItems AllowGrouping="true" EnableAutoFill="true">
+                    <GridTemplates>
+                        <EmptyRecordTemplate>
+                            <span>Please wait while data loading...</span>
+                        </EmptyRecordTemplate>
+                    </GridTemplates>
+                    <GridColumns>
+                        @foreach (var stru in DataTbl.Columns)
+                        {
+                            if(stru.ToString() == "Password")
+                            {
+                                <GridColumn Field=@stru.ToString() HeaderText=@stru.ToString() TextAlign="TextAlign.Left" AutoFit="true" AllowResizing="true" Visible="false" />
+                            }
+                            else
+                            {
+                                <GridColumn Field=@stru.ToString() HeaderText=@stru.ToString() TextAlign="TextAlign.Left" AutoFit="true" AllowResizing="true" />
+                            }
+
+                        }
+                    </GridColumns>
+                </SfGrid>
+            </div>
+        </div>
+    </section>
+    <!-- Modal2 : start -->
+    <ExitModal></ExitModal>
+    <!-- Modal2 : end -->
+</div>
+<style>
+    .btncls
+    {
+        background: #0d6efd;
+        border-color: #0d6efd;
+        color: #fff;
+        margin-top: 21px;
+    }
+</style>
+@code {
+
+    List<string> ShiftList = new List<string>() { "SheetDet", "ListofUserName", "DevParamDet" };
+    List<DropDownLst> SheetList = new List<DropDownLst>();
+    List<DropDownLst> GrpList = new List<DropDownLst>();
+    public string SelData { get; set; } = "SheetDet";
+    public string SheetVal = "";
+    public string GrpVal = "";
+    private readonly DatabaseContext _context = new DatabaseContext();
+    public List<SheetDet> SheetDataLst;
+    public List<UserDet> UserDataLst;
+    public List<DevParamDet> DevParamLst;
+    public List<string> ToolbarItems = new List<string>() { "Search" };
+    public List<System.Dynamic.ExpandoObject>? lstObj;
+    SfGrid<System.Dynamic.ExpandoObject> DefaultGrid;
+    public DataTable? DataTbl = new DataTable();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchData();
+    }
+    public async Task FetchData()
+    {
+        if(SelData=="SheetDet")
+        {
+            await SheetData();
+
+        }
+        else if (SelData == "ListofUserName")
+        {
+            await UserData();
+        }
+        else
+        {
+            await DevParamDet();
+        }
+
+    }
+    public void HomeBtnClick()
+    {
+        Navmanage.NavigateTo("/Dashboard");
+    }
+
+    public async Task SheetData()
+    {        
+        SheetDataLst = (await _context.GetAllAsync<SheetDet>()).ToList();
+        ListtoDataTable lsttodt = new ListtoDataTable();
+        DataTbl = lsttodt.ToDataTable(SheetDataLst);
+        if (DataTbl.Rows.Count > 0)
+        {
+            lstObj = new List<System.Dynamic.ExpandoObject>();
+            foreach (DataRow row in DataTbl.Rows)
+            {
+                System.Dynamic.ExpandoObject e = new System.Dynamic.ExpandoObject();
+                foreach (DataColumn col in DataTbl.Columns)
+                {
+                    e.TryAdd(col.ColumnName, row.ItemArray[col.Ordinal]);
+                }
+                lstObj.Add(e);
+            }
+        }
+        else
+        {
+            await sfDialogService.AlertAsync("No records found for selected criteria.", CoreVars.EXERROR);
+        }        
+    }
+    public class ListtoDataTable
+    {
+        public DataTable ToDataTable<T>(List<T> items)
+        {
+            DataTable dataTable = new DataTable(typeof(T).Name);
+            //Get all the properties by using reflection
+            PropertyInfo[] Props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            foreach (PropertyInfo prop in Props)
+            {
+                //Setting column names as Property names
+                dataTable.Columns.Add(prop.Name);
+            }
+            foreach (T item in items)
+            {
+                var values = new object[Props.Length];
+                for (int i = 0; i < Props.Length; i++)
+                {
+
+                    values[i] = Props[i].GetValue(item, null);
+                }
+                dataTable.Rows.Add(values);
+            }
+
+            return dataTable;
+        }
+    }
+    public async Task UserData()
+    {
+        // var UserData = await _context.GetAllAsync<UserDet>();
+        UserDataLst = (await _context.GetAllAsync<UserDet>()).ToList();
+        
+        //var obj = UserDataLst.DistinctBy(a => a.);
+
+        ListtoDataTable lsttodt = new ListtoDataTable();
+        DataTbl = lsttodt.ToDataTable(UserDataLst);
+        if (DataTbl.Rows.Count > 0)
+        {
+            lstObj = new List<System.Dynamic.ExpandoObject>();
+            foreach (DataRow row in DataTbl.Rows)
+            {
+                System.Dynamic.ExpandoObject e = new System.Dynamic.ExpandoObject();
+                foreach (DataColumn col in DataTbl.Columns)
+                {
+                    e.TryAdd(col.ColumnName, row.ItemArray[col.Ordinal]);
+                }
+                lstObj.Add(e);
+            }
+        }
+        else
+        {
+            await sfDialogService.AlertAsync("No records found for selected criteria.", CoreVars.EXERROR);
+        }
+    }
+
+    public async Task DevParamDet()
+    {
+
+        DevParamLst = (await _context.GetAllAsync<DevParamDet>()).ToList();
+        ListtoDataTable lsttodt = new ListtoDataTable();
+        DataTbl = lsttodt.ToDataTable(DevParamLst);
+        List<string> SheetLst = new List<string>();
+        DropDownLst dropDownLst = new DropDownLst();
+        DataRow dataRow;
+        lstObj = new List<System.Dynamic.ExpandoObject>();
+        for (int i = 0; i < DataTbl.Rows.Count; i++)
+        {
+            dataRow = DataTbl.Rows[i];
+            if (SheetLst.IndexOf(dataRow["Sheet"].ToString()) < 0)
+            {
+                SheetLst.Add(dataRow["Sheet"].ToString());
+                dropDownLst = new DropDownLst
+                {
+                    Id = dataRow["SheetId"].ToString(),
+                    Name = dataRow["Sheet"].ToString()
+                };
+                SheetList.Add(dropDownLst);
+            }
+        }
+        /*
+        if (DataTbl.Rows.Count > 0)
+        {
+        lstObj = new List<System.Dynamic.ExpandoObject>();
+        foreach (DataRow row in DataTbl.Rows)
+        {
+        System.Dynamic.ExpandoObject e = new System.Dynamic.ExpandoObject();
+        foreach (DataColumn col in DataTbl.Columns)
+            {
+            e.TryAdd(col.ColumnName, row.ItemArray[col.Ordinal]);
+    }
+    lstObj.Add(e);
+    }
+    }
+    else
+    {
+    await sfDialogService.AlertAsync("No records found for selected criteria.", CoreVars.EXERROR);
+    }   */
+        StateHasChanged();
+    }
+    public void OnValueChange(ChangeEventArgs<string, DropDownLst> args)
+    {
+        SheetVal = args.ItemData.Name.Trim();
+        List<string> GrpLst = new List<string>();
+        DropDownLst dropDownLst = new DropDownLst();
+        GrpList = new List<DropDownLst>();
+        DataRow dataRow;
+        for (int i = 0; i < DataTbl.Rows.Count; i++)
+        {
+            dataRow = DataTbl.Rows[i];
+            if (args.ItemData.Name.Trim() == dataRow["Sheet"].ToString().Trim())
+            {
+                if (GrpLst.IndexOf(dataRow["GrpName"].ToString()) < 0)
+                {
+                    GrpLst.Add(dataRow["GrpName"].ToString());
+                    dropDownLst = new DropDownLst
+                    {
+                        Id = dataRow["GrpName"].ToString(),
+                        Name = dataRow["GrpName"].ToString()
+                    };
+                    GrpList.Add(dropDownLst);
+                }
+            }
+        }
+        StateHasChanged();
+    }
+    public async void ViewSheetData()
+    {
+        // if (!string.IsNullOrEmpty(GrpVal))
+        // {
+           
+            Expression<Func<DevParamDet, bool>> predicare = Grp => (Grp.Sheet == SheetVal || Grp.GrpName == GrpVal);
+            IEnumerable<DevParamDet> Devparmadet = (await _context.GetFileteredAsync(predicare)).ToList();
+            //DevParamLst = (await _context.GetAllAsync<DevParamDet>()).ToList();
+
+            ListtoDataTable lsttodt = new ListtoDataTable();
+            DataTbl = lsttodt.ToDataTable(Devparmadet.ToList<DevParamDet>());
+            DataRow dataRow;
+            if (DataTbl.Rows.Count > 0)
+            {
+                lstObj = new List<System.Dynamic.ExpandoObject>();
+                foreach (DataRow row in DataTbl.Rows)
+                {
+                    System.Dynamic.ExpandoObject e = new System.Dynamic.ExpandoObject();
+                    foreach (DataColumn col in DataTbl.Columns)
+                    {
+                        e.TryAdd(col.ColumnName, row.ItemArray[col.Ordinal]);
+                    }
+                    lstObj.Add(e);
+                }
+            }
+            else
+            {
+                await sfDialogService.AlertAsync("No records found for selected criteria.", CoreVars.EXERROR);
+            }
+        //}
+        StateHasChanged();
+    }
+
+    // DataTable dt = new DataTable();
+    // dt.Columns.Add("Id");
+    // dt.Columns.Add("UserName");
+    // dt.Columns.Add("Password");
+    // dt.Columns.Add("Module");
+    // dt.Columns.Add("Sheet");
+    // dt.Columns.Add("Operator");
+    // int Ctr = 0;
+    // foreach (var rec in UserData)
+    // {
+    //     Ctr++;
+    //     DataRow row = dt.NewRow();
+    //     row["Id"] = rec.Id;
+    //     row["UserName"] = rec.UserName;
+    //     row["Password"] = rec.Password;
+    //     row["Module"] = rec.Module;
+    //     row["Sheet"] = rec.Sheet;
+    //     row["Operator"] = rec.Operator;
+    //     dt.Rows.Add(row);
+    // }
+
+
+
+}

@@ -1,0 +1,175 @@
+﻿@page "/QRScan"
+
+@inject SfDialogService sfDialogService
+@inject NavigationManager Navmanage
+@inject HttpClient Http
+
+@using CommunityToolkit.Maui.Views
+@using DLogBook.MauiPages
+@using Newtonsoft.Json
+@using Syncfusion.Blazor.Popups
+@using System.Data
+@using JSCoreLibRazor
+@using DLogBook.Data
+@using SQLite
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Lists
+@using System.Linq.Expressions
+@using Syncfusion.Blazor.Spinner
+@using ZXing.Net.Maui
+@using System.Net.Http.Json;
+@using System.Net;
+@using System.Threading.Tasks;
+@using System.Dynamic;
+@using System.Reflection
+
+<div id="page" class="page">
+</div>
+ @* <div id="page" class="page">
+    <header class="header">
+        <div class="site-brand">
+            <img src="/Images/logo.png" />
+        </div>
+        <div class="header-title">
+            <h1>QRCode</h1>
+        </div>
+    </header>
+
+    <section class="section content px-2">
+        <div>
+            <SfTextBox @ref="@TextCtrl" Placeholder='Group Name' FloatLabelType="FloatLabelType.Always" ValueChange="@ValueChangeHandler" @bind-Value="@ScanValue"></SfTextBox>
+        </div>
+    </section>
+    <footer class="footer">
+        <div class="d-flex align-content-center justify-content-between flex-nowrap p-2 gap-2">
+            <button class="btn btn-primary w-50" type="submit" title="Ok" @onclick="GroupScanner">OK</button>
+            <button class="btn btn-primary w-50" title="Cancel" @onclick="ClosePage">Cancel</button>
+        </div>
+    </footer>
+</div>  *@
+<style>
+   
+    .e-dialog .e-dlg-header-content {
+        background-color: #00aeff
+    }
+
+    .e-dialog .e-dlg-header {
+        color: #fff
+    }
+
+    .e-dialog .e-dlg-header .e-btn-icon.e-icon-dlg-close {
+        color: #fff
+    }
+
+    .e-btn-icon.e-icons.e-close-icon.e-icon-left:before {
+        content: '\e825';
+    }
+</style>
+@code {
+    // public bool HideDiv = false;
+    // public SfTextBox TextCtrl { get; set; } = new SfTextBox();
+    // public string ScanValue { get; set; } = "";
+
+    private readonly DatabaseContext _context = new DatabaseContext();
+    protected override async Task OnInitializedAsync()
+    {
+        // ScanValue = "";
+        // await Task.Yield();
+        // await TextCtrl.FocusAsync();
+        GroupScanner();
+    }
+   
+    // public async void ClosePage()
+    // {
+    //     Navmanage.NavigateTo("/Dashboard");
+    // }
+    public async void GroupScanner()
+    {
+        //Global.IsReadOnly = false;
+        try
+        {
+           string SheetGrpName = "";
+            
+            bool Yes = await sfDialogService.ConfirmAsync(null, "Scan QR Code", new DialogOptions()
+            {
+                    ChildContent = @<table class="Table">
+                    <tbody>
+                        <tr>
+                            <td>
+                                <SfTextBox Type="InputType.Text" FloatLabelType="FloatLabelType.Always" Placeholder="Enter Group Name" @bind-Value="@SheetGrpName"></SfTextBox>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+    ,ShowCloseIcon = true
+            });
+            if(Yes)
+            {
+                if (!string.IsNullOrEmpty(SheetGrpName))
+                {
+                    var parts = SheetGrpName.Split('_', 2);
+                    if (parts.Length > 0)
+                    {
+                        Global.Sheet = parts[0];
+                    }
+                    if (parts.Length > 1)
+                    {
+                        Global.SheetGrp = parts[1];
+                    }
+
+                    if (!string.IsNullOrEmpty(Global.Sheet) && !string.IsNullOrEmpty(Global.SheetGrp))
+                    {
+                        Expression<Func<DevParamDet, bool>> predicare2 = GrpData => (GrpData.Sheet == Global.Sheet && ((GrpData.QRCodePattern == "1" && !GrpData.GrpName.Contains("MAIN QR")) || GrpData.GrpName == Global.SheetGrp));
+                        var GrpNameData = await _context.GetFileteredAsync(predicare2);
+                        int EmptyPrmCnt = GrpNameData.Count();
+                        if (EmptyPrmCnt > 0)
+                        {
+                            if (Global.SheetGrp.Contains("MAIN QR"))
+                            {
+                                Navmanage.NavigateTo("/sheetgrp", true);
+                            }
+                            else
+                            {
+                                Navmanage.NavigateTo("/parameter", true);
+                            }
+//                            Navmanage.NavigateTo("/parameter", true);
+                        }
+                        else
+                        {
+                            await sfDialogService.AlertAsync("Group Not Found.", CoreVars.EXERROR);
+                            Navmanage.NavigateTo("/Dashboard");
+                        }
+                    }
+                    else
+                    {
+                        await sfDialogService.AlertAsync("Group is Empty.", CoreVars.EXERROR);
+                        Navmanage.NavigateTo("/Dashboard");
+                    }
+                }
+                else
+                {
+                    await sfDialogService.AlertAsync("Group Not Found.", CoreVars.EXERROR);
+                    Global.ShowPendTask = false;
+                    //Global.IsReadOnly = ((Global.UserName.ToLower() == "administrator") ? false : true);
+                    Global.IsReadOnly = false;
+                    Navmanage.NavigateTo("/Dashboard");
+                }
+            }
+            else
+            {
+                Global.ShowPendTask = false;
+                //Global.IsReadOnly = ((Global.UserName.ToLower() == "administrator") ? false : true);
+                Global.IsReadOnly = false;
+                Navmanage.NavigateTo("/Dashboard");
+            }
+
+            //SheetGrpName = await sfDialogService.PromptAsync("Enter Group Name:", CoreVars.APPMANAGER);
+            
+        }
+        catch (Exception ex)
+        {
+            await sfDialogService.AlertAsync("GroupScanner => " + ex.Message, CoreVars.EXERROR);
+        }
+        
+    }
+}

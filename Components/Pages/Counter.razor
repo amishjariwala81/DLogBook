@@ -1,0 +1,237 @@
+﻿@page "/counter"
+
+@inject SfDialogService sfDialogService
+@inject NavigationManager Navmanage
+
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Newtonsoft.Json
+@using Syncfusion.Blazor.Popups
+@using System.Data
+@using JSCoreLibRazor
+@using DLogBook.Data
+@using Syncfusion.Blazor.Lists
+@using System.Linq.Expressions
+@using Syncfusion.Blazor.Spinner
+
+<div id="page" class="page">
+    <!-- Header : start -->
+    <header class="header">
+        <div class="site-brand">
+            <img src="/Images/logo.png" />
+        </div>
+
+        <div class="header-title">
+            <h1>Application Name</h1>
+        </div>
+
+        <div class="header-icons">
+            <a class="icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M21 20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V9.48907C3 9.18048 3.14247 8.88917 3.38606 8.69972L11.3861 2.47749C11.7472 2.19663 12.2528 2.19663 12.6139 2.47749L20.6139 8.69972C20.8575 8.88917 21 9.18048 21 9.48907V20ZM19 19V9.97815L12 4.53371L5 9.97815V19H19Z"></path></svg>
+            </a>
+            <a class="icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M21 20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V9.48907C3 9.18048 3.14247 8.88917 3.38606 8.69972L11.3861 2.47749C11.7472 2.19663 12.2528 2.19663 12.6139 2.47749L20.6139 8.69972C20.8575 8.88917 21 9.18048 21 9.48907V20ZM19 19V9.97815L12 4.53371L5 9.97815V19H19Z"></path></svg>
+            </a>
+        </div>
+    </header>
+    <!-- Header : end -->
+    <!-- Content : start -->
+    <section class="section content px-2">
+        <SfUploader @ref="fileUpload" Accept="image/*,video/*" AllowedExtensions=".jpg, .jpeg, .png, .gif, .mp4, .mov" 
+                    AutoUpload="true" HtmlAttributes="@htmlatrr">
+            <UploaderEvents ValueChange="@SaveFiles"></UploaderEvents>
+        </SfUploader>
+        <br />
+        <br />
+        <input type="file" id="file-upload" accept="image/*,video/*" capture />
+        <br />
+        <br />
+        @* <InputFile class="custom-file-input" OnChange="OnChange" accept="image/*,video/*;capture=camera" id="inputFile" /> *@
+        <br />
+        <br />
+        <button @onclick="OnCounterClicked">Take Photo</button>
+        @* <form class="register-form d-flex flex-column">
+            <div class="mb-3 row">
+                <div class="col-6">
+                    <label class="form-label"> Per</label>
+                    <SfTextBox Enabled="false"></SfTextBox>
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Weight</label>
+                    <SfNumericTextBox TValue="decimal?"  inputmode="numeric" ShowSpinButton="false"></SfNumericTextBox>
+                </div>
+            </div>
+	    </form> *@
+    </section>
+<!-- Content : end -->
+<!-- Footer : start -->
+<footer class="footer">
+    <div class="d-flex align-content-center justify-content-between flex-nowrap p-2 gap-2">
+        <button type="submit" class="btn btn-primary w-50" title="Save Order Entry">Save</button>
+        <button class="btn btn-light w-50" title="Cancel Order Entry">Cancel</button>
+    </div>
+</footer>
+</div>
+@code {
+    private int currentCount = 0;
+    SfUploader fileUpload;
+    Dictionary<string, Object> htmlatrr = new Dictionary<string, object>();
+
+
+    protected override void OnInitialized()
+    {
+
+        this.htmlatrr.Add("accept", "image/*;capture=camera");
+
+    }
+    // public async void TakePhoto()
+    // {
+    //     // Use the MediaPicker to capture a photo or video
+    //     var picker = new MediaPicker();
+//     var file = await picker.PickAsync(new[] { "image/*", "video/*" });
+
+    //     // Upload the file to the server
+    //     await UploadFile(file);
+    // }
+    public async void TakePhoto()
+    {
+
+        try
+        {
+            if (MediaPicker.Default.IsCaptureSupported)
+            {
+                //FileResult photo = await MediaPicker.Default.CapturePhotoAsync();
+                FileResult photo = await MediaPicker.Default.PickPhotoAsync();
+
+                if (photo != null)
+                {
+                    // save the file into local storage
+                    string localFilePath = Path.Combine(FileSystem.CacheDirectory, photo.FileName);
+                  //  string localFilePath = Path.Combine(FileSystem.AppDataDirectory, photo.FileName);
+                    using Stream sourceStream = await photo.OpenReadAsync();
+                    using FileStream localFileStream = File.OpenWrite(localFilePath);
+
+                    try
+                    {
+                        using (var localFileStream1 = File.OpenWrite(localFilePath))
+                        {
+                            await sourceStream.CopyToAsync(localFileStream1);
+                            await sfDialogService.AlertAsync("SaveFiles => " + localFileStream1.Name, CoreVars.EXERROR);
+                        }
+                    //    await sourceStream.CopyToAsync(localFileStream);
+                        await sfDialogService.AlertAsync("SaveFiles => " + localFileStream.Name, CoreVars.EXERROR);
+                    }
+                    catch(Exception ex)
+                    {
+                        await sfDialogService.AlertAsync("SaveFiles => " + ex.Message, CoreVars.EXERROR);
+                    }
+                }
+            }
+        }
+        catch(Exception ex)
+        {
+            await sfDialogService.AlertAsync("SaveFiles => " + ex.Message, CoreVars.EXERROR);
+        }
+    }
+
+    private async void OnCounterClicked()
+    {
+           
+            if (MediaPicker.Default.IsCaptureSupported)
+            {
+                //TAKE PHOTO OR CAPTURE PHOTO
+                FileResult myPhoto = await MediaPicker.Default.CapturePhotoAsync();
+
+                //LOAD PHOTO
+               // FileResult myPhoto = await MediaPicker.Default.PickPhotoAsync();
+                if (myPhoto != null)
+                {
+                    //save the image captured in the application.
+                 try
+                 {
+
+                    string localFilePath = Path.Combine(FileSystem.CacheDirectory, myPhoto.FileName);
+                    using Stream sourceStream = await myPhoto.OpenReadAsync();
+                    await Task.Delay(10000);
+                    using FileStream localFileStream = File.OpenWrite(localFilePath);
+                    
+                        await Task.Delay(10000);                        
+                        await sourceStream.CopyToAsync(localFileStream);
+                    await Shell.Current.DisplayAlert("OOPS 1", localFileStream.Name, "Ok");
+                        //await sfDialogService.AlertAsync("SaveFiles => " + localFileStream.Name, CoreVars.EXERROR);
+                     }
+                     catch (Exception ex)
+                     {
+                         //await sfDialogService.AlertAsync("SaveFiles => " + ex.Message, CoreVars.EXERROR);
+                         await Shell.Current.DisplayAlert("OOPS Ex", ex.Message, "Ok");
+                     }
+                    await Shell.Current.DisplayAlert("OOPS Out", "Out", "Ok");
+                    //await sfDialogService.AlertAsync("SaveFiles => " + localFileStream.Name, CoreVars.EXERROR);
+                }
+            }
+            else
+            {
+                await Shell.Current.DisplayAlert("OOPS", "You device isn't supported", "Ok");
+            }
+        }
+
+    public async Task OnChange(InputFileChangeEventArgs args)
+    {
+        try
+        {
+            var files = args.GetMultipleFiles();
+            foreach (var file in files)
+            {
+                var fileName = file.Name;
+                var fileExtension = Path.GetExtension(fileName);
+
+                // Save file to local storage
+                var filePath = Path.Combine(Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments), fileName);
+                FileStream fileStream1 = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+                await file.OpenReadStream(long.MaxValue).CopyToAsync(fileStream1);
+                fileStream1.Close();
+            }
+        }
+        catch (Exception ex)
+        {
+            await sfDialogService.AlertAsync("SaveFiles => " + ex.Message, CoreVars.EXERROR);
+        }
+    }
+    public async Task SaveFiles(UploadChangeEventArgs args)
+    {
+        try
+        {
+            foreach (var file in args.Files)
+            {
+                var stream = file.Stream;
+                var fileName = file.FileInfo.Name;
+                var fileExtension = Path.GetExtension(fileName);
+
+                // Save file to local storage
+                var filePath = Path.Combine(Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments), fileName);
+                FileStream fileStream1 = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+                await file.File.OpenReadStream(long.MaxValue).CopyToAsync(fileStream1);
+                fileStream1.Close();
+            }
+        }
+        catch(Exception ex)
+        {
+            await sfDialogService.AlertAsync("SaveFiles => " + ex.Message, CoreVars.EXERROR);
+        }
+
+    }
+    public async Task<byte[]> ReadFully(Stream input)
+    {
+        using (MemoryStream ms = new MemoryStream())
+        {
+            await input.CopyToAsync(ms);
+            return ms.ToArray();
+        }
+    }
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+
+}

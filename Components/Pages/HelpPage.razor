@@ -1,0 +1,152 @@
+﻿@page "/helppage"
+
+@inject SfDialogService sfDialogService
+@inject NavigationManager Navmanage
+
+@using Newtonsoft.Json
+@using Syncfusion.Blazor.Popups
+@using System.Data
+@using JSCoreLibRazor
+@using DLogBook.Data
+@using SQLite
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Lists
+@using System.Linq.Expressions
+@using Syncfusion.Blazor.Spinner
+
+<div id="page" class="page">
+    <!-- Header : start -->
+    <header class="header">
+        <div class="header-icons">
+            <a class="icon" onclick="@CallProfilePage">
+                <img src="/Images/icon-header-back.svg">
+            </a>
+        </div>
+
+        <div class="header-title">
+            <h1>Help Page</h1>
+        </div>
+
+        <div class="header-icons">            
+            <a class="icon" href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                <img src="/Images/icon-header-support.svg" />
+            </a>
+            <a class="icon" href="#" data-bs-toggle="modal" data-bs-target="#exampleModalOne">
+                <img src="/Images/icon-header-exit.svg" />
+            </a>
+
+        </div>
+    </header>
+    <!-- Header : end -->
+    <!-- Content : start -->
+    <section class="section content px-2">
+         <div class="reports d-flex flex-column gap-1">
+            <div class="report">
+                <SfListView DataSource="@HelpTopics" class="report">
+                    <ListViewFieldSettings TValue="HelpTopics" Id="HelpId" Text="Topic">
+                    </ListViewFieldSettings>
+                    <ListViewEvents TValue="HelpTopics" Clicked="@OpenDialog">
+                    </ListViewEvents>
+                </SfListView>
+            </div>
+        </div>
+        <SfSpinner Size="40" @bind-Visible="@SpinnerVisibleProperty" Type="SpinnerType.Bootstrap5"></SfSpinner>
+    </section>
+    <!-- Content : end -->
+    <!-- Modal1 : start -->
+    <HelpDesk></HelpDesk>
+    <!-- Modal1 : end -->
+    <!-- Modal2 : start -->
+    <ExitModal></ExitModal>
+    <!-- Modal2 : end -->
+</div>
+
+<style>
+    .e-dialog .e-dlg-header-content {
+        background-color: #00aeff
+    }
+
+    .e-dialog .e-dlg-header {
+        color: #fff
+    }
+
+    .e-dialog .e-dlg-header .e-btn-icon.e-icon-dlg-close 
+    {
+        color: #fff
+    }
+</style>
+
+@code 
+{
+    public List<HelpTopics> HelpTopics = new();    
+    string SrcURL = string.Empty;
+    string Topic = string.Empty;
+    private DataTable DataTbl;
+    private bool lRetVal = false;
+    private bool SpinnerVisibleProperty { get; set; } = false;
+    protected override async Task OnInitializedAsync()
+    {
+        this.SpinnerVisibleProperty = true;
+        GetHelpTopics();
+    }
+
+    private void CallProfilePage()
+    {
+        Navmanage.NavigateTo("/profilepg");
+    }
+
+    public async void GetHelpTopics()
+    {        
+        try
+        {         
+            var oTblData = new GetTableData
+            {                   
+                Query = " select HelId, AppType, Topic, IOSURL, AndrURL from HelpLink where AppType = '" + Global.AppType + "' order by 1 ",
+                SQLConnStr = Global.MainDBConnStr
+            };
+            string json = JsonConvert.SerializeObject(oTblData);
+            var response = await RazorFunc.CallAPIAsync(Global.APIURL, "GetTableData", json);
+            var respStatusCode = response.StatusCode;
+            if (respStatusCode.ToString() == "OK")
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var retJSON = JsonConvert.DeserializeObject<RetJSON>(responseBody);
+                if (retJSON.Status.ToString() == "Error")
+                {
+                    await sfDialogService.AlertAsync(retJSON.Msg.ToString() + retJSON.ExError, CoreVars.EXERROR);
+                }
+                else
+                {
+                    DataTbl = JsonConvert.DeserializeObject<DataTable>(retJSON.Data.ToString().Trim());
+                    foreach (DataRow data in DataTbl.Rows)
+                    {
+                        HelpTopics HelpTopic = new();
+                        HelpTopic.HelpId = int.Parse( data["HelId"].ToString().Trim() );
+                        HelpTopic.Topic = data["Topic"].ToString().Trim();
+                        //HelpTopic.IOSURL = data["IosUrl"].ToString().Trim();
+                        //HelpTopic.AndrURL = data["AndrUrl"].ToString().Trim();
+                        HelpTopic.ViewURL = data["AndrUrl"].ToString().Trim();
+                        HelpTopics.Add(HelpTopic);                        
+                    }
+                    this.SpinnerVisibleProperty = false;
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await sfDialogService.AlertAsync("GetHelpTopics => " + ex.Message, CoreVars.EXERROR);
+        }
+    }    
+    public async void OpenDialog(ClickEventArgs<HelpTopics> args)
+    {           
+        Topic = args.Text.Trim();
+        var Obj = HelpTopics.FirstOrDefault(obj => obj.Topic == Topic);
+        if( Obj!= null)
+        {
+            SrcURL = Obj.ViewURL;
+            lRetVal = true;        
+        }
+        Navmanage.NavigateTo(SrcURL,true);                
+    }   
+}

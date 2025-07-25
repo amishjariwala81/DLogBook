@@ -1,0 +1,274 @@
+﻿@page "/login"
+
+@inject NavigationManager Navmanage
+@inject SfDialogService DialogService
+@inject ILocalStorageService _localstorage
+
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.Buttons
+@using DLogBook.Data
+@using SQLite
+@using System.Linq.Expressions
+@using DLogBook.Components.Pages
+@using Newtonsoft.Json
+@using Microsoft.Maui.Media;
+@using Microsoft.Maui.Storage;
+@using System.IO;
+@using System.Threading.Tasks;
+@using System.Net.NetworkInformation
+
+<div id="page" class="page">
+
+    <header class="header">
+        <div class="site-brand">
+            <img src="/Images/logo.png" />
+        </div>
+        <div class="header-title">
+            <h1>DLogBook Login</h1>
+        </div>
+        <div class="header-icons">
+            <a class="icon" href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M22 17.0022C21.999 19.8731 19.9816 22.2726 17.2872 22.8616L16.6492 20.9476C17.8532 20.7511 18.8765 20.0171 19.4649 19H17C15.8954 19 15 18.1046 15 17V13C15 11.8954 15.8954 11 17 11H19.9381C19.446 7.05369 16.0796 4 12 4C7.92038 4 4.55399 7.05369 4.06189 11H7C8.10457 11 9 11.8954 9 13V17C9 18.1046 8.10457 19 7 19H4C2.89543 19 2 18.1046 2 17V12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12V12.9987V13V17V17.0013V17.0022ZM20 17V13H17V17H20ZM4 13V17H7V13H4Z"></path></svg>
+            </a>
+            <a class="icon" href="#" data-bs-toggle="modal" data-bs-target="#exampleModalOne">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M6.26489 3.80698L7.41191 5.44558C5.34875 6.89247 4 9.28873 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 9.28873 18.6512 6.89247 16.5881 5.44558L17.7351 3.80698C20.3141 5.61559 22 8.61091 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 8.61091 3.68594 5.61559 6.26489 3.80698ZM11 12V2H13V12H11Z"></path></svg>
+            </a>
+           
+            @*  <a class="icon" onclick="@OnCounterClicked">
+            <img src="/Images/icon-header-settings.svg" />
+            </a>
+                <a class="icon" onclick="@OnCounterClicked">
+                <img src="/Images/icon-header-settings.svg" />
+            </a>
+            <a class="icon" onclick="@getfname">
+                <img src="/Images/icon-header-settings.svg" />
+            </a>   *@
+           
+          
+        </div>
+        
+        
+    </header>
+    
+    <section class="section content px-2" >
+       @if (profiles.Contains(ConnectionProfile.WiFi))
+       {
+            <div style="background-color:lightgreen;height:18px;margin-top: -7px;">
+                <h6 style="text-align:right;color:black">WiFi Mode</h6>
+            </div>
+       }
+       else if (profiles.Contains(ConnectionProfile.Cellular))
+       {
+            <div style="background-color:lightgreen;height:18px;margin-top: -7px;">
+                <h6 style="text-align:right;color:black">Mobile Data Mode</h6>
+            </div>
+       }
+         
+        <div class="mb-3 param-field">
+            <SfTextBox Placeholder="User Name" FloatLabelType="@FloatLabelType.Always" @bind-Value="@UserName"></SfTextBox>
+        </div>
+        <div class="mb-3 param-field">
+            <SfTextBox Placeholder="Password" FloatLabelType="@FloatLabelType.Always" @bind-Value="@Password" Type="InputType.Password"></SfTextBox>                    
+        </div>
+        <div class="mb-3 row">
+            <div class="col-6 param-field">
+            <SfDatePicker TValue="DateTime" Placeholder="Date" Format="dd/MM/yyyy" @bind-Value="@Date" FloatLabelType="@FloatLabelType.Always"></SfDatePicker>
+            </div>
+            <div class="col-6 param-field">
+                <SfDropDownList TValue="string" TItem="string" Placeholder="Shift" FloatLabelType="@FloatLabelType.Always" DataSource="@ShiftList" @bind-Value="SelShift" Width="100%"></SfDropDownList>
+            </div>
+        </div>
+        <div class="mb-3 param-field">
+            <SfTextBox Placeholder="Operator" FloatLabelType="@FloatLabelType.Always" @bind-Value="@Operator"></SfTextBox>
+        </div>
+        <div class="d-flex align-content-center justify-content-between flex-nowrap p-2 gap-2">
+            <button class="btn btn-primary w-100" title="Login" @onclick="ValidateLogin">Login</button>
+        </div>
+            @* <Image ref="capturedImage" /> *@
+    </section>
+    <footer class="footer">
+        @* <div class="d-flex align-content-center justify-content-between flex-nowrap p-2 gap-2">
+            <button class="btn btn-primary w-100" title="Login" @onclick="ValidateLogin">Login</button>
+        </div> *@
+       
+    </footer>
+    <!-- Modal1 : start -->
+        <HelpDesk></HelpDesk>
+    <!-- Modal1 : end -->
+    <!-- Modal2 : start -->
+        <ExitModal></ExitModal>
+    <!-- Modal2 : end -->
+</div>
+<style>
+    .e-dialog .e-dlg-header-content {
+        background-color: #00aeff
+    }
+
+    .e-dialog .e-dlg-header {
+        color: #fff
+    }
+
+    .e-dialog .e-dlg-header .e-btn-icon.e-icon-dlg-close {
+        color: #fff
+    }
+    /* 
+    img {
+        display: block;
+        margin: 0 auto
+    } */
+</style>
+@code 
+{
+    Image capturedImage = new Image();
+    public string UserName { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+
+    List<string> ShiftList = new List<string>() { "A", "B", "C" };
+    public static string SelShift { get; set; } = "A";
+    string GetHour;
+
+    public DateTime Date { get; set; } = DateTime.Now.Date;
+    public string Operator { get; set; }
+
+    private readonly DatabaseContext _context = new DatabaseContext();
+
+    UserDet Sheet1;
+    private IEnumerable<UserDet> user;
+    IEnumerable<ConnectionProfile> profiles = Connectivity.Current.ConnectionProfiles;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Global.PtyAPIURL = await _localstorage.GetItemAsync<string>("APIURL");
+        Global.PtyDBConnStr = new()
+        {
+            AppType = Global.AppType,
+            DBServer = await _localstorage.GetItemAsync<string>("DBServer"),
+            DBName = await _localstorage.GetItemAsync<string>("DBName"),
+            UserName = await _localstorage.GetItemAsync<string>("SQLUserName"),
+            Password = await _localstorage.GetItemAsync<string>("SQLPassword")
+        };
+       
+        UserName = await _localstorage.GetItemAsync<string>("UserName");        
+        GetHour = DateTime.Now.ToString("HH");
+        if (int.Parse(GetHour) >= 6 && int.Parse(GetHour) < 14)
+        {
+            SelShift = "A";
+        }
+        else if (int.Parse(GetHour) >= 14 && int.Parse(GetHour) < 22)
+        {
+            SelShift = "B";
+        }
+        else
+        {
+            SelShift = "C";
+        }
+    }
+    private async void ValidateLogin()
+    {
+        if (!string.IsNullOrEmpty(Operator) && !string.IsNullOrEmpty(SelShift) && !string.IsNullOrEmpty(UserName))
+        {
+            Global.Shift = SelShift;
+            Global.SLoginDate = Date.ToString("dd/MM/yyyy");
+            Global.SOperator = Operator;
+
+            string UName = UserName.ToLower().Trim();
+            string Pwd = Password.ToLower().Trim();
+
+
+            if (UName == "jsadmin" )
+            {
+                if (Pwd != "jupiter1234")
+                {
+                    await DialogService.AlertAsync("Password is Incorrect.", CoreVars.APPMANAGER);
+                }
+                else
+                {
+                    Global.UserName = UserName;
+                    Global.ShowPendTask = true;
+                    Navmanage.NavigateTo("/Dashboard");
+                }
+            }
+            else
+            {
+                //Expression<Func<UserDet, bool>> predicare2 = UserData => (UserData.UserName.ToLower().Trim() == UName && UserData.Password.ToLower().Trim() == Pwd);
+                var UserData = await _context.GetAllAsync<UserDet>();
+                bool UserFound = false;            
+                foreach ( var user in UserData)
+                {
+                    UserFound = false;
+                    if (UName == user.UserName.ToLower().Trim())
+                    {
+                        UserFound = true;
+                        if (Pwd == user.Password.ToLower().Trim())
+                        {
+                            Global.UserName = UserName;
+                            Global.ShowPendTask = true;
+                            Navmanage.NavigateTo("/Dashboard");
+                            break;    
+                        }
+                        else
+                        {
+                            await DialogService.AlertAsync("Password is Incorrect.", CoreVars.APPDATAMANAGER);
+                            break;
+                        }
+                    }    
+                }
+                if(!UserFound)
+                {
+                    await DialogService.AlertAsync("User Name is Incorrect.", CoreVars.APPDATAMANAGER);
+                }
+            }
+            await _localstorage.SetItemAsync("UserName", Global.UserName);
+        }
+        else
+        {
+            await DialogService.AlertAsync("Please enter all data.", CoreVars.APPMANAGER);
+        }
+    }
+    // public async void OnCounterClicked()
+    // {
+    //     Navmanage.NavigateTo("/kptest");
+    // }
+    // public async Task TakeAndSavePhoto()
+    // {
+
+    //     // Create custom folder
+    //     //string sGpath = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+    //     // string sGpath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+    //     // var folderPath = Path.Combine(sGpath, "KPKK");
+    //     // if (!Directory.Exists(folderPath))
+    //     // {
+    //     //     Directory.CreateDirectory(folderPath);
+    //     // }
+
+    //     // Capture photo
+    //     FileResult photo = await MediaPicker.Default.CapturePhotoAsync();
+    //     if (photo != null)
+    //     {
+    //         //Console.WriteLine($"Error: "); // Optional, for debugging
+    //         string uniqueFileName = $"{DateTime.Now:yy_MM_dd_HH_mm_ss}.jpg";
+    //         string filePath = Path.Combine(FileSystem.CacheDirectory, uniqueFileName);
+    //         if (!string.IsNullOrEmpty(filePath))
+    //         {
+    //             using Stream sourceStream = await photo.OpenReadAsync();
+    //             using FileStream localFileStream = File.OpenWrite(filePath);
+
+    //             await sourceStream.CopyToAsync(localFileStream);
+    //             Console.WriteLine($"Photo saved to gallery: {filePath}"); // Optional, for debugging
+    //             // using (FileStream newFileStream = File.OpenWrite(filePath))
+    //             // {
+    //             //     await (await photo.OpenReadAsync()).CopyToAsync(newFileStream);
+    //             // }
+    //         }
+    //     }
+
+    //     // Save photo to custom folder
+        
+
+    //    // Console.WriteLine($"Photo saved to gallery: {filePath}"); // Optional, for debugging
+    // }    
+
+}
+    

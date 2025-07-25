@@ -1,0 +1,568 @@
+﻿@inject NavigationManager Navmanage
+@inject SfDialogService DialogService
+@inject ILocalStorageService _localstorage
+
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.Buttons
+@using DLogBook.Data
+@using SQLite
+@using System.Linq.Expressions
+@using DLogBook.Components.Pages
+@using Newtonsoft.Json
+@using Microsoft.Maui.Media;
+@using Microsoft.Maui.Storage;
+@using System.IO;
+@using System.Threading.Tasks;
+@using System.Dynamic;
+@using System.Data;
+@using System.Reflection
+@using Syncfusion.Blazor.Spinner
+    
+<div>
+    <div class="display-top-bar">
+        <SfDropDownList TValue="string" TItem="string" DataSource="@StatusLst" @bind-Value="SelStatus" Width="20%">
+            <DropDownListEvents TItem="string" TValue="string" ValueChange="@ValueChangeHandler"></DropDownListEvents>
+            <DropDownListFieldSettings Text="Text" Value="ID"></DropDownListFieldSettings>
+        </SfDropDownList>
+        <div class="search-wrap">
+            <SfTextBox class="e-control e-textbox e-lib e-input" placeholder="Search..." ShowClearButton="true" Enabled=@(!ActBtnDisabled)
+                       Input='((e) => RazorFunc.SearchInGrid(e, DefaultGrid))'></SfTextBox>
+        </div>
+        <div class="display-inline-btns">            
+            <SfButton title="Add new entry" @onclick="AddNewEntry">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M15 4H5V20H19V8H15V4ZM3 2.9918C3 2.44405 3.44749 2 3.9985 2H16L20.9997 7L21 20.9925C21 21.5489 20.5551 22 20.0066 22H3.9934C3.44476 22 3 21.5447 3 21.0082V2.9918ZM11 11V8H13V11H16V13H13V16H11V13H8V11H11Z"></path></svg>
+            </SfButton>
+            <div class="display-inline-btns" style="display:@BtnHide">
+                <SfButton title="Change selected entry" @onclick="EditEntry">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M15.7279 9.57627L14.3137 8.16206L5 17.4758V18.89H6.41421L15.7279 9.57627ZM17.1421 8.16206L18.5563 6.74785L17.1421 5.33363L15.7279 6.74785L17.1421 8.16206ZM7.24264 20.89H3V16.6473L16.435 3.21231C16.8256 2.82179 17.4587 2.82179 17.8492 3.21231L20.6777 6.04074C21.0682 6.43126 21.0682 7.06443 20.6777 7.45495L7.24264 20.89Z"></path></svg>
+                </SfButton>            
+                <SfButton title="Delete selected entry"  @onclick="DeleteEntry">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M17 6H22V8H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V8H2V6H7V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V6ZM18 8H6V20H18V8ZM9 11H11V17H9V11ZM13 11H15V17H13V11ZM9 4V6H15V4H9Z"></path></svg>
+                </SfButton>
+            </div> 
+            @* style="display:@DeleteBtnHide" *@
+            <SfButton @onclick="Action">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(0,0,0,1)"><path d="M19 4H5V20H19V4ZM3 2.9918C3 2.44405 3.44749 2 3.9985 2H19.9997C20.5519 2 20.9996 2.44772 20.9997 3L21 20.9925C21 21.5489 20.5551 22 20.0066 22H3.9934C3.44476 22 3 21.5447 3 21.0082V2.9918ZM11.2929 13.1213L15.5355 8.87868L16.9497 10.2929L11.2929 15.9497L7.40381 12.0607L8.81802 10.6464L11.2929 13.1213Z"></path></svg>
+            </SfButton>            
+        </div>
+    </div>
+    @* RowSelected="RowSelectHandler" *@
+    <SfGrid class="tab-grid-min-height" @ref="DefaultGrid" AllowSelection="true" DataSource="@DataSource" GridLines="GridLine.Both" RowHeight="@CoreVars.ROWHEIGHT" AllowResizing="true" EnableAutoFill="true">
+        <GridEvents RowSelected="RowSelectHandler" OnRecordDoubleClick="RecordDoubleClickHandler" TValue="ExpandoObject"></GridEvents>        
+        <GridSelectionSettings EnableToggle="false" ></GridSelectionSettings>
+        <GridColumns>
+            @if (DataTbl.Rows.Count > 0)
+            {
+                @foreach (var stru in DataTbl.Columns)
+                {
+                    if (stru.ToString() == "TaskId")
+                    {
+                        <GridColumn Field=@stru.ToString() HeaderText=@stru.ToString() TextAlign="TextAlign.Left" AutoFit="true" AllowResizing="true" Visible="false" />
+                    }
+                    else
+                    {
+                        <GridColumn Field=@stru.ToString() HeaderText=@stru.ToString() TextAlign="TextAlign.Left" AutoFit="true" AllowResizing="true" />                    
+                    }
+                }
+            }
+        </GridColumns>
+    </SfGrid>
+
+    <SfDialog Width="300px" ShowCloseIcon="true" @bind-Visible="@IsVisible">
+        <DialogTemplates>
+            <Header> Note </Header>
+            <Content>
+                <SfTextBox Multiline=true FloatLabelType="@FloatLabelType.Never" Placeholder="Enter Notes" @bind-Value="@Notes"></SfTextBox>                
+            </Content>
+        </DialogTemplates>
+        <DialogButtons>
+            <DialogButton Content="OK" IsPrimary="true" OnClick="@SaveData" />
+            <DialogButton Content="Cancel" OnClick="@CloseDialog" />
+        </DialogButtons>        
+    </SfDialog>
+
+    <SfDialog Width="400px" ShowCloseIcon="true" @bind-Visible="@ActionVisible">
+        <DialogTemplates>
+            <Header> Action Details - Status: @Status </Header>
+            <Content>
+                <label> Task: <b>@Notes</b></label>
+                <br />
+                <label> Raised By: <b>@RaisedLabel</b></label>
+                <br />
+                <div style= "display: @Var1">
+                    <label>Enter the Action</label>
+                    <SfTextBox Multiline=true FloatLabelType="@FloatLabelType.Never" Placeholder="Enter Action" @bind-Value="@Actions" 
+                             ></SfTextBox>
+                    <SfCheckBox Label="Close this action" @bind-Checked="isChecked"></SfCheckBox>
+                </div>
+                <div>
+                    <label><b>Action(s) taken:</b></label>
+                </div>
+                <SfGrid class="tab-grid-min-height" @ref="ActionDefaultGrid" DataSource="@ActionDataSource" GridLines="GridLine.Both"  RowHeight="@CoreVars.ROWHEIGHT" AllowResizing="true"  EnableAutoFill="true">                    
+                    @if (ActionDataTbl.Rows.Count > 0)
+                    {
+                        <GridSelectionSettings EnableToggle="false"></GridSelectionSettings>
+                        <GridColumns>
+                            @foreach (var Actionstru in ActionDataTbl.Columns)
+                            {
+                                if (Actionstru.ToString() == "TaskId" || Actionstru.ToString() == "Status")
+                                {
+                                    <GridColumn Field=@Actionstru.ToString() HeaderText=@Actionstru.ToString() TextAlign="TextAlign.Left" AutoFit="true" AllowResizing="true" Visible="false" />
+                                }
+                                else
+                                {
+                                    <GridColumn Field=@Actionstru.ToString() HeaderText=@Actionstru.ToString() TextAlign="TextAlign.Left" AutoFit="true" AllowResizing="true" />
+                                }
+                            }
+                        </GridColumns>
+                    }
+                    else
+                    {
+                        <GridSelectionSettings EnableToggle="false"></GridSelectionSettings>
+                        <GridColumns> </GridColumns>
+                    }
+                </SfGrid>
+            </Content>
+        </DialogTemplates>
+        <DialogButtons>
+            <DialogButton Content="OK" IsPrimary="true" OnClick="@ActionSaveData" />
+            <DialogButton Content="Cancel" OnClick="@CloseDialog" />
+        </DialogButtons>
+    </SfDialog>
+    <SfSpinner Size="40" @bind-Visible="@SpinnerVisibleProperty" Type="SpinnerType.Bootstrap5"></SfSpinner>
+</div>
+@code {
+    private bool IsVisible { get; set; } = false;
+    public string Notes { get; set; } = string.Empty;
+    public string Date;
+    public string Time;
+    private readonly DatabaseContext _context = new DatabaseContext();
+    public IEnumerable<TaskMst> TaskMstData;    
+    private bool ActionVisible { get; set; } = false;
+    private bool isChecked = false;
+    public string Actions { get; set; } = string.Empty;
+    public string RaisedLabel = string.Empty;
+    public string ActionStatus = string.Empty;
+    public string Var1 = string.Empty;
+    public string BtnHide = string.Empty;
+    public string Status = string.Empty;
+    List<string> StatusLst = new List<string>() { "Open", "Closed", "All" };
+    public static string SelStatus { get; set; } = "Open";
+    private bool SpinnerVisibleProperty { get; set; } = false;
+    private string DeleteBtnHide = string.Empty;
+
+    // Added By Amish Sir
+    public string PageName = "TaskMst";
+    public List<SQLTblFldDef> TblStru = new List<SQLTblFldDef>();
+    private SfGrid<System.Dynamic.ExpandoObject> DefaultGrid { get; set; }
+    public List<System.Dynamic.ExpandoObject>? DataSource;
+    private DataTable? DataTbl = new DataTable();
+    public bool DisplayDataMode = true;
+    public RenderFragment GridColsBuilder { get; set; }
+    public int AddEditMode = 0;
+    public bool ActBtnDisabled = false;
+
+    public List<System.Dynamic.ExpandoObject>? ActionDataSource;
+    private SfGrid<System.Dynamic.ExpandoObject> ActionDefaultGrid { get; set; }
+    private DataTable? ActionDataTbl = new DataTable();
+    protected override async Task OnInitializedAsync()
+    {
+        DisplayData();
+        AddEditMode = Global.AddEditMode;        
+    }
+    private void CloseDialog()
+    {        
+        this.IsVisible = false;
+        this.ActionVisible = false;
+    }
+
+    public async void SaveData()
+    {
+        if(!string.IsNullOrEmpty(Notes))
+        {            
+            Date = DateTime.Now.ToString("dd/MM/yyyy");
+            Time = DateTime.Now.ToString("HH:mm:ss");
+            if (Global.AddEditMode == 1)
+            {
+                TaskMst TaskMstLst;
+                TaskMstLst = new TaskMst();
+                TaskMstLst.TaskId = RazorFunc.GetUniqueId();
+                TaskMstLst.Task = Notes;
+                TaskMstLst.Operator = Global.UserName.ToLower().Trim();
+                TaskMstLst.Date = Date;
+                TaskMstLst.Time = Time;
+                TaskMstLst.Status = "Open";
+                await _context.AddItemAsync<TaskMst>(TaskMstLst);                
+                await DialogService.AlertAsync("Data Saved Successfully.", CoreVars.APPMANAGER);
+                this.IsVisible = false;
+            }
+            else
+            {
+                TaskMst TaskMstLst;
+                TaskMstLst = new TaskMst();
+                TaskMstLst.TaskId = Global.GetDetailById;
+                TaskMstLst.Task = Notes;
+                TaskMstLst.Operator = Global.UserName.ToLower().Trim();
+                TaskMstLst.Date = Date;
+                TaskMstLst.Time = Time;
+                TaskMstLst.Status = "Open";
+                await _context.UpdateItemAsync<TaskMst>(TaskMstLst);                        
+                await DialogService.AlertAsync("Data Updated Successfully.", CoreVars.APPMANAGER);
+                this.IsVisible = false;
+            }
+        }
+        else
+        {
+            await DialogService.AlertAsync("Notes Can't be Empty.", CoreVars.EXERROR);
+        }
+        DisplayData();
+    }
+
+    private async void DisplayData()
+    {
+        try
+        {        
+            if(this.ActionVisible == true)
+            {                
+                Expression<Func<TaskDet, bool>> predicare = user => (user.TaskId == Global.GetDetailById);
+                var TaskDetData = (await _context.GetFileteredAsync(predicare)).OrderByDescending(x => x.Time).ToList();
+                ActionDataTbl = ListToDataTable(TaskDetData);
+                ActionDataSource = null;
+                if (ActionDataTbl.Rows.Count > 0)
+                {
+                    ActionDataSource = new List<System.Dynamic.ExpandoObject>();
+                    foreach (DataRow row in ActionDataTbl.Rows)
+                    {
+                        System.Dynamic.ExpandoObject e = new System.Dynamic.ExpandoObject();
+                        foreach (DataColumn col in ActionDataTbl.Columns)
+                        {
+                            e.TryAdd(col.ColumnName, row.ItemArray[col.Ordinal]);
+                        }
+                        ActionDataSource.Add(e);
+                    }
+                }                
+            }
+            else
+            {
+                if (SelStatus != "All")
+                {
+                    Expression<Func<TaskMst, bool>> predicare = user => (user.Status == SelStatus);
+                    var TaskMstData = (await _context.GetFileteredAsync(predicare)).ToList();
+                    DataTbl = ListToDataTable(TaskMstData);
+                }
+                else
+                {
+                    var TaskMstData = (await _context.GetAllAsync<TaskMst>()).ToList();
+                    DataTbl = ListToDataTable(TaskMstData);
+                }
+                DataSource = null;
+                if (DataTbl.Rows.Count > 0)
+                {
+                    DataSource = new List<System.Dynamic.ExpandoObject>();
+                    foreach (DataRow row in DataTbl.Rows)
+                    {
+                        System.Dynamic.ExpandoObject e = new System.Dynamic.ExpandoObject();
+                        foreach (DataColumn col in DataTbl.Columns)
+                        {
+                            e.TryAdd(col.ColumnName, row.ItemArray[col.Ordinal]);
+                        }
+                        DataSource.Add(e);
+                    } 
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await DialogService.AlertAsync(ex.Message, CoreVars.EXERROR);
+        }
+        StateHasChanged();
+        // DefaultGrid.SelectedRowIndex = 0;
+    }
+
+    RenderFragment RenderNewEntryPage(string PageName) => builder =>
+    {
+        builder.OpenElement(0, "div");
+        builder.OpenComponent(1, typeof(DynamicComponent));
+        builder.AddAttribute(2, "Type", Type.GetType($"DreamSmart.WebComponents.Pages.Designer." + @PageName));
+        builder.CloseComponent();
+        builder.CloseElement();
+    };
+
+    private RenderFragment RenderNewEntryComponent { get; set; }
+
+    private void AddNewEntry()
+    {
+        RenderNewEntryComponent = RenderNewEntryPage(PageName + "_Entry");
+        Global.AddEditMode = 1;
+        Global.GetDetailById = string.Empty;
+        DisplayDataMode = false;
+        Notes = string.Empty;
+        this.IsVisible = true;        
+    }
+    public async Task EditEntry()
+    {
+        try
+        {            
+            bool RecSel = await IsRecordSelected(DefaultGrid);
+            if (RecSel)
+            {                    
+                if(Global.UserName.ToLower().Trim() == selRec["Operator"].ToString())
+                {
+                    string Id = selRec["TaskId"].ToString();
+                    Expression<Func<TaskDet, bool>> predicare = user => (user.TaskId == Id);
+                    var TaskDetData = (await _context.GetFileteredAsync(predicare)).ToList();
+                    if (TaskDetData.Count == 0)
+                    {
+                        RenderNewEntryComponent = RenderNewEntryPage(PageName + "_Entry");
+                        DisplayDataMode = false;
+                        Global.GetDetailById = selRec["TaskId"].ToString();
+                        Global.AddEditMode = 2;
+                        Notes = selRec["Task"].ToString();                
+                        this.IsVisible = true;
+                        BtnHide = "";
+                    }
+                    else
+                    {
+                        await DialogService.AlertAsync("You already have action so you can't edit and delete.", CoreVars.EXERROR);
+                        BtnHide = "none";
+                    }
+                }
+                else
+                {
+                    await DialogService.AlertAsync("You Don't have Right to edit this note.", CoreVars.EXERROR);
+                    BtnHide = "none";
+                }
+            }                              
+        }
+        catch (Exception ex)
+        {
+            await DialogService.AlertAsync(ex.Message, CoreVars.EXERROR);
+        }
+    }
+    public async Task DeleteEntry()
+    {
+        try
+        {            
+            bool RecSel = await IsRecordSelected(DefaultGrid);
+            if (RecSel)
+            {                
+                if (Global.UserName.ToLower().Trim() == selRec["Operator"].ToString() || (Global.UserName.ToLower().Trim() == "jsadmin" || Global.UserName.ToLower().Trim() == "administrator"))
+                {
+                    bool confirm = await DialogService.ConfirmAsync("Are you sure to delete selected entry?", "Confirm Delete");
+                    if (confirm)
+                    {
+                        string Id = selRec["TaskId"].ToString();
+                        Expression<Func<TaskDet, bool>> predicare = user => (user.TaskId == Id);
+                        var TaskDetData = (await _context.GetFileteredAsync(predicare)).ToList();
+                        Global.GetDetailById = selRec["TaskId"].ToString();
+                        TaskMst TaskMstLst;
+                        TaskMstLst = new TaskMst();
+                        TaskMstLst.TaskId = Global.GetDetailById;
+                        TaskMstLst.Task = Notes;
+                        TaskMstLst.Operator = Global.UserName.ToLower().Trim();
+                        TaskMstLst.Date = Date;
+                        TaskMstLst.Time = Time;
+                        TaskMstLst.Status = SelStatus;
+                        await _context.DeleteItemAsync<TaskMst>(TaskMstLst);
+                        await DialogService.AlertAsync("Data Deleted Successfully.", CoreVars.APPMANAGER);
+                        DisplayData();
+                        BtnHide = "";                    
+                    }
+                }
+                else
+                {
+                    await DialogService.AlertAsync("You Don't have Right to delete this note.", CoreVars.EXERROR);
+                    BtnHide = "none";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await DialogService.AlertAsync(ex.Message, CoreVars.EXERROR);
+        }
+    }
+    IDictionary<string, object>? selRec;
+    public async void RowSelectHandler(RowSelectEventArgs<ExpandoObject> args)
+    {
+        selRec = args.Data as IDictionary<string, object>;
+        string Id = selRec["TaskId"].ToString();
+        string Status = selRec["Status"].ToString();
+        Expression<Func<TaskDet, bool>> predicare = user => (user.TaskId == Id );
+        var TaskDetData = (await _context.GetFileteredAsync(predicare)).ToList();
+        if(TaskDetData.Count == 0)
+        {
+            BtnHide = " ";
+        }
+        else
+        {
+            if(SelStatus == "Open")
+            {
+                BtnHide = "none";
+                Var1 = " ";
+            }
+            else
+            {
+                if (Global.UserName.ToLower().Trim() == "jsadmin" || Global.UserName.ToLower().Trim() == "administrator")
+                {
+                    BtnHide = " ";
+                }
+                else
+                {
+                    if(Status == "Open")
+                    {
+                        Var1 = " ";
+                    }
+                    else
+                    {
+                        Var1 = "none";
+                    }
+                    BtnHide = "none";
+                }            
+            }
+        }
+        StateHasChanged();
+    }
+
+    public async Task<bool> IsRecordSelected(SfGrid<System.Dynamic.ExpandoObject> DefaultGrid) // to be added in library
+    {
+        bool Retval = true;
+        var getSelected = await DefaultGrid.GetSelectedRowIndexesAsync();
+        if (getSelected.Count <= 0)
+        {
+            Retval = false;
+            await DialogService.AlertAsync("Please select line item to make any data operation .", CoreVars.APPDATAMANAGER);
+        }
+        return Retval;
+    }
+
+    public void RecordDoubleClickHandler(RecordDoubleClickEventArgs<ExpandoObject> args)
+    {
+        EditEntry();
+    }
+    public DataTable ListToDataTable<T>(List<T> items)
+    {
+        DataTable dataTable = new DataTable(typeof(T).Name);
+        //Get all the properties by using reflection
+        PropertyInfo[] Props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        foreach (PropertyInfo prop in Props)
+        {
+            //Setting column names as Property names
+            dataTable.Columns.Add(prop.Name);
+        }
+        foreach (T item in items)
+        {
+            var values = new object[Props.Length];
+            for (int i = 0; i < Props.Length; i++)
+            {
+                values[i] = Props[i].GetValue(item, null);
+            }
+            dataTable.Rows.Add(values);
+        }
+        return dataTable;
+    }
+
+    public async void ValueChangeHandler()
+    {
+        if (SelStatus == "Open")
+        {            
+            Var1 = " ";
+            BtnHide = " ";                       
+        }
+        else if (SelStatus == "Closed")
+        {
+            Var1 = "none";            
+            BtnHide = "none";
+        }
+        DisplayData();
+    }
+
+    public async void Action()
+    {        
+        try
+        {
+            isChecked = false;
+            bool RecSel = await IsRecordSelected(DefaultGrid);                     
+            if (RecSel)
+            {
+                Global.GetDetailById = selRec["TaskId"].ToString();
+                Notes = selRec["Task"].ToString();
+                Date = selRec["Date"].ToString();
+                Time = selRec["Time"].ToString();
+                RaisedLabel = Global.UserName.ToLower().Trim()  + " @ " + Date + " " + Time; 
+                Status = selRec["Status"].ToString();
+                this.ActionVisible = true;               
+                if(SelStatus == "All")
+                {
+                    if(selRec["Status"].ToString() == "Open")
+                    {
+                        Var1 = "";
+                    }
+                    else
+                    {
+                        Var1 = "none";
+                    }
+                }
+            }           
+        }
+        catch (Exception ex)
+        {
+            await DialogService.AlertAsync(ex.Message, CoreVars.EXERROR);
+        }
+        DisplayData();
+    }
+
+    public async void ActionSaveData()
+    {        
+        if (!string.IsNullOrEmpty(Actions))
+        {
+            if(isChecked == true)
+            {
+                SelStatus = "Closed";
+            }
+            else
+            {
+                SelStatus = "Open";
+            }
+            TaskDet TaskDetLst;
+            TaskDetLst = new TaskDet();
+            TaskDetLst.TaskId = selRec["TaskId"].ToString(); 
+            TaskDetLst.Action = Actions;
+            TaskDetLst.Operator = Global.UserName.ToLower().Trim();
+            TaskDetLst.Date = DateTime.Now.ToString("dd/MM/yyyy");
+            TaskDetLst.Time = DateTime.Now.ToString("HH:mm:ss");
+            TaskDetLst.Status = SelStatus;
+            await _context.AddItemAsync<TaskDet>(TaskDetLst);
+
+            if (isChecked == true){
+                TaskMst TaskMstLst;
+                TaskMstLst = new TaskMst();
+                TaskMstLst.TaskId = selRec["TaskId"].ToString();
+                TaskMstLst.Task = Notes;
+                TaskMstLst.Operator = Global.UserName.ToLower().Trim();
+                TaskMstLst.Date = Date;
+                TaskMstLst.Time = Time;
+                TaskMstLst.Status = SelStatus;
+                await _context.UpdateItemAsync<TaskMst>(TaskMstLst);
+
+                TaskDetLst = new TaskDet();
+                TaskDetLst.TaskId = selRec["TaskId"].ToString(); 
+                TaskDetLst.Action = "Closed";
+                TaskDetLst.Operator = Global.UserName.ToLower().Trim();
+                TaskDetLst.Date = DateTime.Now.ToString("dd/MM/yyyy");
+                TaskDetLst.Time = DateTime.Now.ToString("HH:mm:ss");
+                TaskDetLst.Status = SelStatus;
+                await _context.AddItemAsync<TaskDet>(TaskDetLst);
+            } 
+            await DialogService.AlertAsync("Data Saved Successfully.", CoreVars.APPMANAGER);                
+            Actions = string.Empty;                
+            CloseDialog();            
+        }
+        else
+        {
+            await DialogService.AlertAsync("Action Can't be Empty.", CoreVars.EXERROR);
+        }
+        DisplayData();
+    }
+}

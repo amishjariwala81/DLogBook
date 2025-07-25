@@ -1,0 +1,253 @@
+﻿@page "/kptest"
+
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Data
+
+<h3>KPTest</h3>
+<div> Count + @CountEmp</div>
+<div> Match + @TestTemp</div>
+<SfGrid @ref="EmpGrid" DataSource="@Employees" AllowSelection="true">
+    <GridTemplates>
+        <DetailTemplate>
+            @{
+                var employee = (context as EmployeeData);
+            }
+            <SfGrid @ref="DefaultGrid" DataSource="@Orders" Toolbar="@Toolbaritems" AllowPaging="true" AllowSelection="true" Query="@(new Query().Where("EmployeeID", "equal", employee.EmployeeID))">
+                @* <GridEvents TValue="Order"   OnToolbarClick="@((e)=>ToolbarClickHandler(e, employee.EmployeeID))"></GridEvents> *@
+                <GridPageSettings PageSize="6"></GridPageSettings>
+                <GridEditSettings AllowEditing="true"></GridEditSettings>
+                <GridSelectionSettings EnableSimpleMultiRowSelection="true" Type="Syncfusion.Blazor.Grids.SelectionType.Multiple" />
+                <GridColumns>
+                    @* <GridColumn Field=@nameof(Order.XXX) HeaderText="OrderXXX" Type="Syncfusion.Blazor.Grids.ColumnType.CheckBox" Width="50"></GridColumn> *@
+                    <GridColumn Field=@nameof(Order.OrderID) HeaderText="Order ID" Width="110" AllowEditing="false"> </GridColumn>
+                    <GridColumn Field=@nameof(Order.EmployeeID) HeaderText="EmployeeID" Width="110" IsPrimaryKey="true"> </GridColumn>
+                    <GridColumn Field=@nameof(Order.CustomerID) HeaderText="Customer ID" Width="110" AllowEditing="false"></GridColumn>
+                    <GridColumn Field=@nameof(Order.Freight) HeaderText="Freight" Width="90" Format="C2"></GridColumn>
+                    <GridColumn Field=@nameof(Order.ShipCity) HeaderText="Ship City" Width="110" AllowEditing="false"></GridColumn>
+                    <GridColumn Field=@nameof(Order.Aprroval) HeaderText="Aprroval" DisplayAsCheckBox="true" Width="50"></GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </DetailTemplate>
+    </GridTemplates>
+    @* <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Multiple"></GridSelectionSettings> *@
+    <GridSelectionSettings EnableSimpleMultiRowSelection="true" Type="Syncfusion.Blazor.Grids.SelectionType.Multiple"  />
+    <GridEvents RowSelected="RowSelectHandler"  TValue="EmployeeData"></GridEvents>
+    <GridColumns>
+
+        <GridColumn Type="Syncfusion.Blazor.Grids.ColumnType.CheckBox" Width="50"></GridColumn>
+        @*DataBound="DataBoundHandler" *@
+        <GridColumn Field=@nameof(EmployeeData.EmployeeID) HeaderText="EmployeeID" Width="110" IsPrimaryKey="true"> </GridColumn>
+        <GridColumn Field=@nameof(EmployeeData.FirstName) HeaderText="First Name" Width="110"> </GridColumn>
+        <GridColumn Field=@nameof(EmployeeData.Title) HeaderText="Title" Width="110"></GridColumn>
+        <GridColumn Field=@nameof(EmployeeData.Country) HeaderText="Country" Width="110"></GridColumn>
+    </GridColumns>
+</SfGrid>
+
+
+
+
+@code {
+    //@ref=Grid[(int)employee.EmployeeID]
+    Dictionary<int?, SfGrid<Order>> Grid = new Dictionary<int?, SfGrid<Order>>();
+    public SfGrid<Order> DefaultGrid = new();
+    public SfGrid<EmployeeData> EmpGrid = new();
+    public List<EmployeeData> Employees { get; set; }
+    public static List<Order> Orders { get; set; }
+    private List<Object> Toolbaritems = new List<Object>() { new ItemModel() { Text = "Click", TooltipText = "Click", PrefixIcon = "e-click", Id = "Click" } };
+    public int? CountEmp = 0;
+    public string TestTemp = "kp";
+    public List<string> IdMatch = new List<string>();
+    public List<int> IdMatch1 = new List<int>();
+    List<int> SelectIndex { get; set; }
+    public async Task ToolbarClickHandler(Syncfusion.Blazor.Navigations.ClickEventArgs args, int? EmployeeID)
+    {
+        if (args.Item.Id == "Click")
+        {
+            var SelectedRecords = await Grid[(int)EmployeeID].GetSelectedRecordsAsync();
+            //CountEmp = SelectedRecords.Count;
+        }
+    }
+    public async Task DataBoundHandler()
+    {
+        // Here, you can customize your code.
+        if (EmpGrid != null)
+        {
+            //await EmpGrid.DetailExpandAll();
+            await EmpGrid.ExpandAllDetailRowAsync();
+        }
+    }
+
+
+    public async Task RowSelectHandler1(RowSelectEventArgs<EmployeeData> args)
+    {
+        // var selectedEmployee = args.Data;
+        // var selectedEmployeeId = selectedEmployee.EmployeeID;
+
+        // // Get indices of child records (orders) associated with selected employee
+        // var rowIndices = Orders
+        //     .Where(o => o.EmployeeID == selectedEmployeeId)
+        //     .Select((o, index) => index)
+        //     .ToList();
+
+        // // Select rows in the child grid (DefaultGrid)
+        // await DefaultGrid.SelectRowsAsync(rowIndices.ToArray());
+
+        // // Update UI if necessary
+        // StateHasChanged();
+
+        // // Filter orders associated with the selected employee
+        // var selectedOrders = Orders.Where(o => o.EmployeeID == selectedEmployeeId).ToList();
+        // // Get the indices of selected orders in the DefaultGrid
+        // var rowIndices = selectedOrders.Select(order => Orders.IndexOf(order)).ToList();
+
+
+        // //Get the selected employee
+        // var selectedEmployee = args.Data;
+        // var selectedEmployeeId = selectedEmployee.EmployeeID;
+
+        // // Get all orders associated with the selected employee
+        // var selectedOrders = Orders
+        //     .Select((order, index) => new { Order = order, Index = index }) // Include index in the selection
+        //     .Where(o => o.Order.EmployeeID == selectedEmployeeId)
+        //     .Select(o => o.Index) // Select indices of orders
+        //     .ToList();
+
+        // // Select rows in the child grid (DefaultGrid)
+        // await DefaultGrid.SelectRowsAsync(selectedOrders.ToArray());
+
+        // // Update UI if necessary
+        // StateHasChanged();
+    }
+    HashSet<int> ExpandedRows = new HashSet<int>();
+    // public async Task DetailDataBoundHandler(DetailDataBoundEventArgs<EmployeeData> args)
+    // {
+    //     // Here you can perform actions when a detail row is bound (expanded)
+    //     var expandedEmployee = args.Data as EmployeeData;
+    //     // if (!ExpandedRows.Contains(Convert.ToInt32(args.Data.EmployeeID)))
+    //     // {
+
+    //     //     ExpandedRows.Add(Convert.ToInt32(args.Data.EmployeeID));  //add the expanded rows to Hashset
+
+    //     // }
+
+    // }
+
+
+    public async Task RowSelectHandler(RowSelectEventArgs<EmployeeData> args)
+    {
+        var employeeId = args.Data.EmployeeID;
+        await EmpGrid.ExpandCollapseDetailRowAsync(args.Data);
+
+
+        // foreach (var a in ExpandedRows)
+        // {
+        //     var PKIndex = await DefaultGrid.GetRowIndexByPrimaryKeyAsync(a);
+        //     if (PKIndex >= 0)
+        //     {
+        //         IdMatch1.Add(Convert.ToInt32(PKIndex));
+        //     }
+        // }
+
+        int Ctr = 0;
+        foreach (var record in Orders)
+        {
+            if (record.EmployeeID == employeeId)
+            {
+                var rowIndex = await DefaultGrid.GetRowIndexByPrimaryKeyAsync(employeeId);
+                if (rowIndex >= 0)
+                {
+                    IdMatch1.Add(Convert.ToInt32(rowIndex));
+                    IdMatch.Add(record.OrderID);
+                    record.XXX = true;
+                    record.Aprroval = true;
+                    TestTemp = $"Selected Order IDs: {string.Join(", ", IdMatch)}";
+                    await DefaultGrid.Refresh();
+                }
+
+            }
+            Ctr++;
+        }
+        if (IdMatch1.Count > 0)
+        {
+            await DefaultGrid.SelectRowsAsync(IdMatch1.ToArray());//  select rows
+        }
+        StateHasChanged();
+
+        //var employeeId = args.Data.EmployeeID;
+        // if (args.IsHeaderCheckboxClicked) //if header checkbox clicked
+        // {
+        //     var len = args.RowIndexes.Count;
+        //     for (int i = 0; i < len; i++)
+        //     {
+        //         foreach (var record in Orders)
+        //         {
+        //             if (record.EmployeeID == args.Datas[i].EmployeeID)
+        //             {
+
+        //                 var rowIndex = DefaultGrid.GetRowIndexByPrimaryKeyAsync(record.OrderID).Result;
+        //                 if(rowIndex != -1)
+        //                 {
+        //                     IdMatch1.Add(Convert.ToInt32(rowIndex));
+        //                     TestTemp = $"Selected Order IDs: {string.Join(", ", IdMatch1)}";
+        //                 }
+
+        //             }
+        //         }
+        //     }
+        //     if(IdMatch1.Count > 0 )
+        //     {
+        //         await DefaultGrid.SelectRowsAsync(IdMatch1.ToArray());//  select rows
+        //     }
+
+        // }
+
+
+    }
+    protected override void OnInitialized()
+    {
+        Employees = new List<EmployeeData>
+        {
+            new EmployeeData() {EmployeeID = "P" +1, FirstName="Nancy",  Title="Sales Representative",City="Texas", Country="USA"},
+            new EmployeeData() {EmployeeID = "P" +2, FirstName="Andrew",  Title="Vice President",City="London", Country="UK"},
+            new EmployeeData() {EmployeeID = "P" +3, FirstName="Janet",  Title="Sales",City="London", Country="UK"},
+            new EmployeeData() {EmployeeID = "P" +4, FirstName="Margaret",  Title="Sales Manager",City="London", Country="UK"},
+            new EmployeeData() {EmployeeID = "P" +5, FirstName="Steven",  Title="Inside Sales Coordinator",City="Vegas", Country="USA"},
+            new EmployeeData() {EmployeeID = "P" +6, FirstName="Smith",  Title="HR Manager",City="Dubai", Country="UAE"},
+            new EmployeeData() {EmployeeID = "P" +7, FirstName="Steven",  Title="Inside Sales Coordinator",City="Paris", Country="France"},
+            new EmployeeData() {EmployeeID = "P" +8, FirstName="Smith",  Title="HR Manager",City="Mumbai", Country="India"},
+            new EmployeeData() {EmployeeID = "P" +9, FirstName="Smith",  Title="HR Manager",City="Chennai", Country="India"},
+        };
+
+        Orders = Enumerable.Range(1, 9).Select(x => new Order()
+            {
+                OrderID = "k" + 1000 + x,//RazorFunc.GetUniqueId(3),
+                EmployeeID = "P" + x,
+                CustomerID = (new string[] { "ALFKI", "ANANTR", "ANTON", "BLONP", "BOLID" })[new Random().Next(5)],
+                Freight = 2.1 * x,
+                ShipCity = (new string[] { "ALFKI", "ANANTR", "ANTON", "BLONP", "BOLID" })[new Random().Next(5)],
+                Aprroval = false
+            }).ToList();
+        Orders.Add(new Order() { OrderID = "K9005", EmployeeID = "P2", CustomerID = "ALFKI", Freight = 2.1, ShipCity = "ABC", Aprroval = true });
+        StateHasChanged();
+    }
+    public class EmployeeData
+    {
+        public string EmployeeID { get; set; }
+        public string FirstName { get; set; }
+        public string Title { get; set; }
+        public string City { get; set; }
+        public string Country { get; set; }
+    }
+    public class Order
+    {
+        public bool XXX { get; set; }
+        //public int OrderID { get; set; }
+        public string OrderID { get; set; }
+        public string EmployeeID { get; set; }
+        public string CustomerID { get; set; }
+        public double Freight { get; set; }
+        public string ShipCity { get; set; }
+        public bool Aprroval { get; set; }
+    }
+}

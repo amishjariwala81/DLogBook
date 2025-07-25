@@ -1,0 +1,309 @@
+﻿@page "/"
+@inject SfDialogService sfDialogService
+@inject NavigationManager navigationManager
+@inject ILocalStorageService _localstorage
+
+@using Newtonsoft.Json
+@using Syncfusion.Blazor.Popups
+@using System.Data
+@using JSCoreLibRazor
+@using System.Net.NetworkInformation
+@using System.Globalization
+<style>
+    .e-dialog .e-dlg-header-content {
+        background-color: #00aeff
+    }
+
+    .e-dialog .e-dlg-header {
+        color: #fff
+    }
+
+    .e-dialog .e-dlg-header .e-btn-icon.e-icon-dlg-close {
+        color: #fff
+    }
+
+    img {
+        display: block;
+        margin: 0 auto
+    }
+</style>
+
+@code {
+
+    NetworkAccess accessType = Connectivity.Current.NetworkAccess;
+    public string DeviceIdVal = String.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        //await sfDialogService.AlertAsync("Type : " + Global.AppType.ToString(), CoreVars.APPMANAGER);
+        IEnumerable<ConnectionProfile> profiles = Connectivity.Current.ConnectionProfiles;
+        string DeviceIdVal = await _localstorage.GetItemAsync<string>(Global.AppType.ToString().Trim());
+        Global.PtyName = await _localstorage.GetItemAsync<string>("PtyName");
+        Global.MobileNo = DeviceIdVal;
+        string RegStatus = await _localstorage.GetItemAsync<string>("Status");
+        Global.PtyAPIURL = await _localstorage.GetItemAsync<string>("APIURL");
+        Global.PtyDBConnStr = new()
+        {
+            AppType = Global.AppType,
+            DBServer = await _localstorage.GetItemAsync<string>("DBServer"),
+            DBName = await _localstorage.GetItemAsync<string>("DBName"),
+            UserName = await _localstorage.GetItemAsync<string>("SQLUserName"),
+            Password = await _localstorage.GetItemAsync<string>("SQLPassword")
+        };
+
+        //await sfDialogService.AlertAsync("DeviceIdVal : " + (!string.IsNullOrEmpty(DeviceIdVal) ? DeviceIdVal.ToString() : ""), CoreVars.APPMANAGER);
+        //await sfDialogService.AlertAsync("PTYURL : " + (!string.IsNullOrEmpty(Global.PtyAPIURL) ? Global.PtyAPIURL.ToString() : ""), CoreVars.APPMANAGER);
+        //await sfDialogService.AlertAsync("Status : " + (!string.IsNullOrEmpty(RegStatus) ? RegStatus.ToString():""), CoreVars.APPMANAGER);
+        //await sfDialogService.AlertAsync("DSURL : " + Global.APIURL.ToString(), CoreVars.APPMANAGER);
+
+
+
+        if (profiles.Contains(ConnectionProfile.WiFi)) // WIFI
+        {
+
+            try
+            {
+                using (var client = new System.Net.WebClient())
+                using (var stream = client.OpenRead("https://www.google.com"))
+                {
+                    Global.IsInterNetConnected = true;
+                }
+                //await sfDialogService.AlertAsync("WIFI : " + Global.IsInterNetConnected.ToString(), CoreVars.APPMANAGER);
+
+                /*using (var client1 = new System.Net.WebClient())
+                using (var stream = client1.OpenRead("https://jupitersystems.in"))
+                {
+                    await sfDialogService.AlertAsync("WIFI : TRUE CHECK SITE => JUPITER", CoreVars.APPMANAGER);
+                    }*/
+            }
+            catch
+            {
+                Global.IsInterNetConnected = false;
+                //await sfDialogService.AlertAsync("WIFI : " + Global.IsInterNetConnected.ToString(), CoreVars.APPMANAGER);
+            }
+
+            //await sfDialogService.AlertAsync("IsInterNetConnected : " + Global.IsInterNetConnected.ToString(), CoreVars.APPMANAGER);
+            if (Global.IsInterNetConnected)
+            {
+                //await sfDialogService.AlertAsync("CheckDevRegnDBConnAsync Process Call : ", CoreVars.APPMANAGER);
+                CheckDevRegnDBConnAsync();
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(RegStatus) && RegStatus.Trim() == "Registered")
+                {
+                    navigationManager.NavigateTo("/login");
+                }
+                else
+                {
+                    string Msg = "Device is not registered with Jupiter Systems. For device registration process, internet connection is mendatory. Please review your internet settings.";
+                    //await sfDialogService.AlertAsync(Msg, CoreVars.APPMANAGER);
+                    Environment.Exit(0);
+                    //await RazorFunc.ExitAppAsync(0);
+                }
+            }
+
+        }
+        else if (profiles.Contains(ConnectionProfile.Cellular)) // Mobile Data
+        {
+            if (accessType != NetworkAccess.Internet)
+            {
+                Global.IsInterNetConnected = false;
+                //await sfDialogService.AlertAsync("Mobile Data : " + Global.IsInterNetConnected.ToString(), CoreVars.APPMANAGER);
+                if (!string.IsNullOrEmpty(RegStatus) && RegStatus.Trim() == "Registered")
+                {
+                    navigationManager.NavigateTo("/login");
+                }
+                else
+                {
+                    string Msg = "Device is not registered with Jupiter Systems. For device registration process, internet connection is mendatory. Please review your internet settings.";
+                    //await sfDialogService.AlertAsync(Msg, CoreVars.APPMANAGER);
+                    Environment.Exit(0);
+                    //await RazorFunc.ExitAppAsync();
+                }
+            }
+            else
+            {
+                Global.IsInterNetConnected = true;
+                //await sfDialogService.AlertAsync("Mobile Data : " + Global.IsInterNetConnected.ToString(), CoreVars.APPMANAGER);
+                CheckDevRegnDBConnAsync();
+            }
+        }
+        else if (profiles.Contains(ConnectionProfile.Ethernet)) // Len
+        {
+            if (accessType != NetworkAccess.Internet)
+            {
+                Global.IsInterNetConnected = false;
+                //await sfDialogService.AlertAsync("Len : " + Global.IsInterNetConnected.ToString(), CoreVars.APPMANAGER);
+                if (!string.IsNullOrEmpty(RegStatus) && RegStatus.Trim() == "Registered")
+                {
+                    navigationManager.NavigateTo("/login");
+                }
+                else
+                {
+                    string Msg = "Device is not registered with Jupiter Systems. For device registration process, internet connection is mendatory. Please review your internet settings.";
+                    //await sfDialogService.AlertAsync(Msg, CoreVars.APPMANAGER);
+                    Environment.Exit(0);
+                    //await RazorFunc.ExitAppAsync();
+                }
+            }
+            else
+            {
+                Global.IsInterNetConnected = true;
+                //await sfDialogService.AlertAsync("Len : " + Global.IsInterNetConnected.ToString(), CoreVars.APPMANAGER);
+                CheckDevRegnDBConnAsync();
+            }
+        }
+        else 
+        {
+            //await sfDialogService.AlertAsync("Other Case", CoreVars.APPMANAGER);
+            if (!string.IsNullOrEmpty(RegStatus) && RegStatus.Trim() == "Registered")
+            {
+                navigationManager.NavigateTo("/login");
+            }
+            else
+            {
+                string Msg = "Device is not registered with Jupiter Systems. For device registration process, internet connection is mendatory. Please review your internet settings.";
+                //await sfDialogService.AlertAsync(Msg, CoreVars.APPMANAGER);
+                Environment.Exit(0);
+                //await RazorFunc.ExitAppAsync(0);
+            }
+        }
+
+    }
+
+    private async void CheckDevRegnDBConnAsync()
+    {
+        try
+        {
+            //await sfDialogService.AlertAsync("Check Dev. Process start...", CoreVars.APPMANAGER);
+            //Global.MainDB = Global.MainDBConnStr.DBName;
+
+            string json = JsonConvert.SerializeObject(Global.MainDBConnStr);
+            // SQLConnStr sQLConn = new SQLConnStr { ConnName = "DSDevRegDBConnStr", AppType = Global.AppType };
+            // string json = JsonConvert.SerializeObject(sQLConn);
+
+            var response = await RazorFunc.CallAPIAsync(Global.APIURL, "DSSqlConn", json);
+            var respStatusCode = response.StatusCode;
+
+            //await sfDialogService.AlertAsync("respStatusCode => " + respStatusCode.ToString(), CoreVars.APPMANAGER);
+            if (respStatusCode.ToString() == "OK")
+            {
+                string DeviceIdVal = await _localstorage.GetItemAsync<string>(Global.AppType.ToString().Trim());
+
+                Global.MobileNo = DeviceIdVal;
+                DSRptDevDet DSRptDevDet = new DSRptDevDet
+                {
+                    AppType = Global.AppType.ToString(),
+                    DeviceId = (string.IsNullOrEmpty(DeviceIdVal) ? "" : DeviceIdVal)                       
+                };
+                json = JsonConvert.SerializeObject(DSRptDevDet);
+                response = await RazorFunc.CallAPIAsync(Global.APIURL, "ChkDevRegn", json);
+                respStatusCode = response.StatusCode;
+                if (respStatusCode.ToString() == "OK")
+                {
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    var retJSON = JsonConvert.DeserializeObject<RetJSON>(responseBody);
+
+                    if (retJSON.Status.ToString() == "Error")
+                    {
+                        await sfDialogService.AlertAsync(retJSON.Msg.ToString() + retJSON.ExError, CoreVars.EXERROR);
+                    }
+                    else
+                    {
+                        string Msg;
+                        if (retJSON.Data.ToString().ToLower() == "in registration process")
+                        {
+                            Msg = "Please wait, Device is still in Registration Process." + '\n' + "Application will exit for now.";
+                            await sfDialogService.AlertAsync(Msg, CoreVars.APPDATAMANAGER);
+                            Environment.Exit(0);
+                        }
+                        else if (retJSON.Data.ToString().ToLower() == "unregistered")
+                        {
+                            Msg = "Device is not registered with Jupiter Systems." + "\n" + " Please proceed for Registration.";
+                            await sfDialogService.AlertAsync(Msg, CoreVars.APPDATAMANAGER);
+                            navigationManager.NavigateTo("/regUser");
+                        }
+                        else
+                        {
+                            DataTable Dt = JsonConvert.DeserializeObject<DataTable>(retJSON.Data.ToString().Trim());
+                            System.Data.DataRow row = Dt.Rows[0];
+
+                            //myStateContainer.SetValue(DSRptDevDet);
+                            await _localstorage.SetItemAsync(Global.AppType.ToString().Trim(),DeviceIdVal);
+                            await _localstorage.SetItemAsync("Status", "Registered");
+                            await _localstorage.SetItemAsync("APIURL", row["WebServer"].ToString().Trim());
+                            await _localstorage.SetItemAsync("SQLUserName", row["UserName"].ToString().Trim());
+                            await _localstorage.SetItemAsync("SQLPassword", row["Password"].ToString().Trim());
+                            await _localstorage.SetItemAsync("DBName", row["DefDB"].ToString().Trim());
+                            await _localstorage.SetItemAsync("DBServer", row["DbServer"].ToString().Trim());
+                            await _localstorage.SetItemAsync("EDate", row["EDate"].ToString().Trim());
+                            
+                            navigationManager.NavigateTo("/login");
+                            
+                            //navigationManager.NavigateTo($"dashpgnew/{DSRptDevDet.PartyId}");
+                        }
+                    }
+                }
+                else
+                {
+                    await sfDialogService.AlertAsync(respStatusCode.ToString(), CoreVars.EXERROR);
+                }
+            }
+            else
+            {
+                //await sfDialogService.AlertAsync("CheckDevRegnDBConnAsync => " + response.Content, CoreVars.EXERROR);
+                await sfDialogService.AlertAsync("API Connection Problem. " + response.ReasonPhrase, CoreVars.EXERROR);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            await sfDialogService.AlertAsync("CheckDevRegnDBConnAsync => " + ex.Message, CoreVars.EXERROR);
+        }
+    }
+    
+    // public class ConnectivityTest
+    // {
+    //     public ConnectivityTest() =>
+    //         Connectivity.ConnectivityChanged += Connectivity_ConnectivityChanged;
+
+    //     ~ConnectivityTest() =>
+    //         Connectivity.ConnectivityChanged -= Connectivity_ConnectivityChanged;
+
+    //     void Connectivity_ConnectivityChanged(object sender, ConnectivityChangedEventArgs e)
+    //     {
+    //         if (e.NetworkAccess == NetworkAccess.ConstrainedInternet)
+    //             Console.WriteLine("Internet access is available but is limited.");
+
+    //         else if (e.NetworkAccess != NetworkAccess.Internet)
+    //             Console.WriteLine("Internet access has been lost.");
+
+    //         // Log each active connection
+    //         Console.Write("Connections active: ");
+
+    //         foreach (var item in e.ConnectionProfiles)
+    //         {
+    //             switch (item)
+    //             {
+    //                 case ConnectionProfile.Bluetooth:
+    //                     Console.Write("Bluetooth");
+    //                     break;
+    //                 case ConnectionProfile.Cellular:
+    //                     Console.Write("Cell");
+    //                     break;
+    //                 case ConnectionProfile.Ethernet:
+    //                     Console.Write("Ethernet");
+    //                     break;
+    //                 case ConnectionProfile.WiFi:
+    //                     Console.Write("WiFi");
+    //                     break;
+    //                 default:
+    //                     break;
+    //             }
+    //         }
+
+    //         Console.WriteLine();
+    //     }
+    // }
+}
