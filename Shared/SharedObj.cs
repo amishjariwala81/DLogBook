@@ -23,8 +23,8 @@ namespace DLogBook.Shared
 #if DEBUG
        // public static string APIURL = " http://localhost:55555/api";
         //"http://192.168.1.6:44333/api"; 
-        //public static string APIURL = "http://192.168.1.66:44333/api";
-       public static string APIURL = "http://115.96.27.178:44333/api";
+        public static string APIURL = "http://192.168.1.66:44333/api";
+      // public static string APIURL = "http://115.96.27.178:44333/api";
 #else
         public static string APIURL = "http://115.96.27.178:44333/api";
 #endif
