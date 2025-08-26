@@ -210,7 +210,18 @@
 
     public async Task ParamData()
     {
-        Expression<Func<DevParamDet, bool>> GrpCond = user => ( user.GrpName == Global.SheetGrp && user.Sheet == Global.Sheet ) ;
+
+        Expression<Func<DevParamDet, bool>> GrpCond;
+        if(Global.SelLogNo > 0)
+        {
+            string Cond = "_E" + Global.SelLogNo.ToString() + "_";
+            GrpCond = user => (user.GrpName == Global.SheetGrp && user.Sheet == Global.Sheet && user.SubParam.Contains(Cond));//&& user.SubParam.Contains("_E" + Global.SelLogNo.ToString() + "_")
+        }
+        else
+        {
+            GrpCond = user => (user.GrpName == Global.SheetGrp && user.Sheet == Global.Sheet);
+        }
+        
 
         ParamDet = await _context.GetFileteredAsync(GrpCond);
         foreach (var data in ParamDet)

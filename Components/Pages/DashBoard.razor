@@ -804,42 +804,42 @@
             }
             // Email Import
 
-            oTblData = new GetTableData
-            {
-                Query = " Select * from JSEMAILSETUP ",
-                SQLConnStr = Global.PtyDBConnStr
-            };
-            json = JsonConvert.SerializeObject(oTblData);
-            response = await RazorFunc.CallAPIAsync((string.IsNullOrEmpty(Global.PtyAPIURL) ? Global.APIURL : Global.PtyAPIURL), "GetTableData", json);
-            respStatusCode = response.StatusCode;
-            if (respStatusCode.ToString() == "OK")
-            {
-                var responseBody = await response.Content.ReadAsStringAsync();
-                var retJSON = JsonConvert.DeserializeObject<RetJSON>(responseBody);
-                if (retJSON.Status.ToString() == "Error")
-                {
-                    await sfDialogService.AlertAsync(retJSON.Msg.ToString() + retJSON.ExError, CoreVars.EXERROR);
-                }
-                else
-                {
-                    var DataTbl = JsonConvert.DeserializeObject<DataTable>(retJSON.Data.ToString().Trim());
-                    JSEmailSetUp JsEmailLst;
-                    foreach (DataRow Row in DataTbl.Rows)
-                    {
-                        JsEmailLst = new JSEmailSetUp();
-                        JsEmailLst.EmailAdd = Row["EmailAdd"].ToString().Trim();
-                        JsEmailLst.DispName = Row["DispName"].ToString().Trim();
-                        JsEmailLst.Password = Row["Password"].ToString().Trim();
-                        JsEmailLst.MailServer = Row["MailServer"].ToString().Trim();
-                        JsEmailLst.PortNo = Row["PortNo"].ToString().Trim();
-                        JsEmailLst.SSL = Row["SSL"].ToString().Trim();
-                        JsEmailLst.ToEmailAdd = Row["ToEMailAdd"].ToString().Trim();
-                        JsEmailLst.EmailAuth = Row["EmailAuth"].ToString().Trim();
+            // oTblData = new GetTableData
+            // {
+            //     Query = " Select * from JSEMAILSETUP ",
+            //     SQLConnStr = Global.PtyDBConnStr
+            // };
+            // json = JsonConvert.SerializeObject(oTblData);
+            // response = await RazorFunc.CallAPIAsync((string.IsNullOrEmpty(Global.PtyAPIURL) ? Global.APIURL : Global.PtyAPIURL), "GetTableData", json);
+            // respStatusCode = response.StatusCode;
+            // if (respStatusCode.ToString() == "OK")
+            // {
+            //     var responseBody = await response.Content.ReadAsStringAsync();
+            //     var retJSON = JsonConvert.DeserializeObject<RetJSON>(responseBody);
+            //     if (retJSON.Status.ToString() == "Error")
+            //     {
+            //         await sfDialogService.AlertAsync(retJSON.Msg.ToString() + retJSON.ExError, CoreVars.EXERROR);
+            //     }
+            //     else
+            //     {
+            //         var DataTbl = JsonConvert.DeserializeObject<DataTable>(retJSON.Data.ToString().Trim());
+            //         JSEmailSetUp JsEmailLst;
+            //         foreach (DataRow Row in DataTbl.Rows)
+            //         {
+            //             JsEmailLst = new JSEmailSetUp();
+            //             JsEmailLst.EmailAdd = Row["EmailAdd"].ToString().Trim();
+            //             JsEmailLst.DispName = Row["DispName"].ToString().Trim();
+            //             JsEmailLst.Password = Row["Password"].ToString().Trim();
+            //             JsEmailLst.MailServer = Row["MailServer"].ToString().Trim();
+            //             JsEmailLst.PortNo = Row["PortNo"].ToString().Trim();
+            //             JsEmailLst.SSL = Row["SSL"].ToString().Trim();
+            //             JsEmailLst.ToEmailAdd = Row["ToEMailAdd"].ToString().Trim();
+            //             JsEmailLst.EmailAuth = Row["EmailAuth"].ToString().Trim();
                         
-                        await _context.AddItemAsync<JSEmailSetUp>(JsEmailLst);
-                    }
-                }
-            }
+            //             await _context.AddItemAsync<JSEmailSetUp>(JsEmailLst);
+            //         }
+            //     }
+            // }
         }
         catch (Exception ex)
         {

@@ -191,7 +191,6 @@
 
         //Expression<Func<DevParamDet, bool>> predicare = user => (user.Sheet == Global.Sheet);//&& (user.QRCodePattern=="1"? !user.GrpName.Contains("MainQR") :true)
         Expression<Func<DevParamDet, bool>> predicare = user =>user.Sheet == Global.Sheet &&(user.QRCodePattern != "1" || !user.GrpName.Contains("MAIN QR"));
-
         Devparmadet = await _context.GetFileteredAsync(predicare);
         List<string> MenuLst2 = new List<string>();
         var GrpList = Devparmadet.DistinctBy(a => a.GrpName);
@@ -203,16 +202,12 @@
             string Calc = "";
             TotPrmCnt = AllObj.Count();
             EmptyPrmCnt = EmptyObj.Count();
+            int Tmp = 0;
             if ((TotPrmCnt - EmptyPrmCnt) > 0)
             {
-                var Tmp = ((TotPrmCnt - EmptyPrmCnt) * 100) / TotPrmCnt;
-                Calc = Tmp.ToString();
+                Tmp = ((TotPrmCnt - EmptyPrmCnt) * 100) / TotPrmCnt;
             }
-            else
-            {
-                var Tmp = 0;
-                Calc = Tmp.ToString();
-            }
+            Calc = Tmp.ToString();
             dropDownLst = new DropDownLst
             {
                 Id = ParamGrp,
@@ -265,10 +260,60 @@
         // }              
         this.VisibleProperty = false;
     }
-    public void ModListView_ItemSelected(ClickEventArgs<DropDownLst> args)
+    private IEnumerable<DevParamDet> ParamDet;
+    List<string> ReadingCnt = new();
+    public async void ModListView_ItemSelected(ClickEventArgs<DropDownLst> args)
     {
+        ReadingCnt = new();
         Global.SheetGrp = args.Text.Trim();
-        Navmanage.NavigateTo("/Parameter");
+
+        Expression<Func<DevParamDet, bool>> GrpCond = user => (user.GrpName == Global.SheetGrp && user.Sheet == Global.Sheet);
+        ParamDet = await _context.GetFileteredAsync(GrpCond);
+        foreach (var data in ParamDet)
+        {
+            if ((!string.IsNullOrEmpty(data.Shift) && Global.Shift == data.Shift) || string.IsNullOrEmpty(data.Shift))
+            {
+
+
+                if (data.SubParam.Contains("_E"))
+                {
+
+                    List<string> Arr  = data.SubParam.Split("_").ToList();
+                    foreach( string Tmp in Arr)
+                    {
+                        if(Tmp.StartsWith("E"))
+                        {
+                            string Tmp2 = Tmp.Substring(1);
+                            if (Tmp2.All(char.IsDigit))
+                            {
+                                ReadingCnt.Add(Tmp);
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+
+                    }
+
+
+
+                }
+
+            }
+        }
+        var ReadingCnt1 = ReadingCnt.Distinct();
+        if(ReadingCnt1.Count() > 0)
+        {
+            Global.ReadingCnt = ReadingCnt1.Count();
+            Navmanage.NavigateTo("/readingcnt");
+        }
+        else
+        {
+            Global.ReadingCnt = 0;
+            Navmanage.NavigateTo("/Parameter");
+        }
+        
     }
     public void LogOut()
     {

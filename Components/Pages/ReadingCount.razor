@@ -1,0 +1,224 @@
+﻿@page "/readingcnt"
+@inject SfDialogService sfDialogService
+@inject NavigationManager Navmanage
+
+
+@using Newtonsoft.Json
+@using Syncfusion.Blazor.Popups
+@using System.Data
+@using JSCoreLibRazor
+@using DLogBook.Data
+@using SQLite
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Lists
+@using System.Linq.Expressions
+@using Syncfusion.Blazor.Spinner
+@using Syncfusion.Blazor.ProgressBar
+@using System.Net.NetworkInformation
+
+<div id="page" class="page">
+    <header class="header">
+        <div class="site-brand">
+            <img src="/Images/logo.png" />
+        </div>
+        <div class="header-title">
+            <h1>@Global.Sheet</h1>
+        </div>
+        <div class="header-icons">
+            <a class="icon" href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M22 17.0022C21.999 19.8731 19.9816 22.2726 17.2872 22.8616L16.6492 20.9476C17.8532 20.7511 18.8765 20.0171 19.4649 19H17C15.8954 19 15 18.1046 15 17V13C15 11.8954 15.8954 11 17 11H19.9381C19.446 7.05369 16.0796 4 12 4C7.92038 4 4.55399 7.05369 4.06189 11H7C8.10457 11 9 11.8954 9 13V17C9 18.1046 8.10457 19 7 19H4C2.89543 19 2 18.1046 2 17V12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12V12.9987V13V17V17.0013V17.0022ZM20 17V13H17V17H20ZM4 13V17H7V13H4Z"></path></svg>
+            </a>
+            <a class="icon" onclick="@OpenDialog">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M21 15L15 20.996L4.00221 21C3.4487 21 3 20.5551 3 20.0066V3.9934C3 3.44476 3.44495 3 3.9934 3H20.0066C20.5552 3 21 3.45576 21 4.00247V15ZM19 5H5V19H13V14C13 13.4872 13.386 13.0645 13.8834 13.0067L14 13L19 12.999V5ZM18.171 14.999L15 15V18.169L18.171 14.999Z"></path></svg>
+            </a>
+            <a class="icon" href="#" data-bs-toggle="modal" data-bs-target="#exampleModalOne">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M6.26489 3.80698L7.41191 5.44558C5.34875 6.89247 4 9.28873 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 9.28873 18.6512 6.89247 16.5881 5.44558L17.7351 3.80698C20.3141 5.61559 22 8.61091 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 8.61091 3.68594 5.61559 6.26489 3.80698ZM11 12V2H13V12H11Z"></path></svg>
+            </a>
+        </div>
+    </header>
+
+    <section class="section content px-2">
+        @if (profiles.Contains(ConnectionProfile.WiFi))
+        {
+            <div style="background-color:lightgreen;height:18px;margin-top: -7px;">
+                <h6 style="text-align:right;color:black">WiFi Mode</h6>
+            </div>
+        }
+        else if (profiles.Contains(ConnectionProfile.Cellular))
+        {
+            <div style="background-color:lightgreen;height:18px;margin-top: -7px;">
+                <h6 style="text-align:right;color:black">Mobile Data Mode</h6>
+            </div>
+        }
+        <div class="reports d-flex flex-column gap-1">
+            <div class="mb-3 row">
+              
+                <SfSpinner Size="40" @bind-Visible="@VisibleProperty" Type="SpinnerType.Bootstrap5"></SfSpinner>
+                <SfListView DataSource="@ReadingMenu" class="report">
+                    <ListViewFieldSettings TValue="DropDownLst" Id="Id" Text="Name">
+                    </ListViewFieldSettings>
+                    <ListViewEvents TValue="DropDownLst" Clicked="ModListView_ItemSelected">
+                    </ListViewEvents>
+                     <ListViewTemplates TValue="DropDownLst">
+                        <Template>
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-9">
+                                        <span>@((context as DropDownLst).Name)</span>
+                                    </div>
+                                    <div class="col-3">
+                                        <SfProgressBar Type="ProgressType.Linear" Value="@(Convert.ToDouble((context as DropDownLst).LognDesc))"
+                                                       TrackColor="white" ProgressColor="#00aeff" Height="6" Minimum="0" Maximum="100">
+                                        </SfProgressBar>
+                                    </div>
+                                </div>
+                            </div>
+                        </Template>
+                    </ListViewTemplates>
+                </SfListView>
+
+                <SfDialog ShowCloseIcon="true" CloseOnEscape="true" @ref="DialogRef" Visible=false>
+                    <DialogTemplates>
+                        <Header>Task Manager</Header>
+                        <Content>
+                            <TaskManager></TaskManager>
+                        </Content>
+                        <FooterTemplate>
+                            <SfButton CssClass="e-primary e-flat" @onclick="@CloseDialog">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="rgba(255,255,255,1)"><path d="M11.9997 10.5865L16.9495 5.63672L18.3637 7.05093L13.4139 12.0007L18.3637 16.9504L16.9495 18.3646L11.9997 13.4149L7.04996 18.3646L5.63574 16.9504L10.5855 12.0007L5.63574 7.05093L7.04996 5.63672L11.9997 10.5865Z"></path></svg>
+                                Cancel
+                            </SfButton>
+                        </FooterTemplate>
+                    </DialogTemplates>
+                </SfDialog>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="d-flex align-content-center justify-content-between flex-nowrap p-2 gap-2">
+            <button class="btn btn-primary w-100" title="back" @onclick="back">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="32" fill="rgba(255,255,255,1)"><path d="M7.82843 10.9999H20V12.9999H7.82843L13.1924 18.3638L11.7782 19.778L4 11.9999L11.7782 4.22168L13.1924 5.63589L7.82843 10.9999Z"></path></svg>
+                Log Sheet
+            </button>
+        </div>
+    </footer>
+    <!-- Modal1 : start -->
+    <HelpDesk></HelpDesk>
+    <!-- Modal1 : end -->
+    <!-- Modal2 : start -->
+    <ExitModal></ExitModal>
+    <!-- Modal2 : end -->
+    <a class="icon icon-scanner" onclick="@ShowQRCodePg">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="24" fill="rgba(255,255,255,1)"><path d="M16 17V16H13V13H16V15H18V17H17V19H15V21H13V18H15V17H16ZM21 21H17V19H19V17H21V21ZM3 3H11V11H3V3ZM5 5V9H9V5H5ZM13 3H21V11H13V3ZM15 5V9H19V5H15ZM3 13H11V21H3V13ZM5 15V19H9V15H5ZM18 13H21V15H18V13ZM6 6H8V8H6V6ZM6 16H8V18H6V16ZM16 6H18V8H16V6Z"></path></svg>
+    </a>
+
+</div>
+<style>
+    .e-dialog .e-dlg-header-content {
+        background-color: #00aeff
+    }
+
+    .e-dialog .e-dlg-header {
+        color: #fff
+    }
+
+        .e-dialog .e-dlg-header .e-btn-icon.e-icon-dlg-close {
+            color: #fff
+        }
+
+</style>
+
+@code {
+    IEnumerable<ConnectionProfile> profiles = Connectivity.Current.ConnectionProfiles;
+    SfDialog DialogRef;
+    SfDialog TaskDialogRef;
+    private bool VisibleProperty { get; set; } = false;
+    public List<DropDownLst> ReadingMenu = new();
+    DropDownLst dropDownLst = new DropDownLst();
+    private readonly DatabaseContext _context = new DatabaseContext();
+    private IEnumerable<DevParamDet> Devparmadet;
+    Expression<Func<DevParamDet, bool>> predicate;
+    int EmptyPrmCnt;
+    int TotPrmCnt = 0;
+    protected override async Task OnInitializedAsync()
+    {
+
+        for(int ictr = 0 ; ictr < Global.ReadingCnt ; ictr++)
+        {
+            dropDownLst = new DropDownLst
+            {
+                Id = "Log " + (ictr + 1).ToString(),
+                Name = "Log " + (ictr + 1).ToString()
+            };
+            ReadingMenu.Add(dropDownLst);
+        }
+        // if (Global.ReadingCnt > 0)
+        // {
+        //     // for (int ictr = 0; ictr < Global.ReadingCnt; ictr++)
+        //     // {
+        //     //     //var tmp = Global.ReadingCnt[ictr];
+        //     //     predicate = user => (user.GrpName == Global.SheetGrp && user.Sheet == Global.Sheet && user.SubParam.Contains());
+        //     // }
+        // }
+        // else
+        // {
+        //     predicate = user => (user.GrpName == Global.SheetGrp && user.Sheet == Global.Sheet);
+        // }
+        // //Expression<Func<DevParamDet, bool>> predicare = user =>user.Sheet == Global.Sheet &&(user.QRCodePattern != "1" || !user.GrpName.Contains("MAIN QR"));
+        // Devparmadet = await _context.GetFileteredAsync(predicate);
+        // List<string> MenuLst2 = new List<string>();
+        // var GrpList = Devparmadet.DistinctBy(a => a.GrpName);
+        // foreach (var GrpName in GrpList)
+        // {
+        //     string ParamGrp = GrpName.GrpName.ToString();
+        //     var EmptyObj = Devparmadet.Where(a => a.GrpName == ParamGrp && string.IsNullOrEmpty(a.ParamData));
+        //     var AllObj = Devparmadet.Where(a => a.GrpName == ParamGrp);
+        //     string Calc = "";
+        //     TotPrmCnt = AllObj.Count();
+        //     EmptyPrmCnt = EmptyObj.Count();
+        //     int Tmp = 0;
+        //     if ((TotPrmCnt - EmptyPrmCnt) > 0)
+        //     {
+        //         Tmp = ((TotPrmCnt - EmptyPrmCnt) * 100) / TotPrmCnt;
+        //     }
+        //     Calc = Tmp.ToString();
+        //     dropDownLst = new DropDownLst
+        //     {
+        //         Id = ParamGrp,
+        //         Name = ParamGrp,
+        //         LognDesc = Calc//EmptyPrmCnt.ToString() + "/ " + TotPrmCnt.ToString()
+
+        //     };
+        //     SheetGrpList.Add(dropDownLst);
+        //}
+    }
+    public void LogOut()
+    {
+        Navmanage.NavigateTo("/login");
+    }
+
+    private async void OpenDialog()
+    {
+        await this.DialogRef.ShowAsync(true);
+    }
+
+    private async void CloseDialog()
+    {
+        await this.DialogRef.HideAsync();
+    }
+    public void ShowQRCodePg()
+    {
+        Global.IsReadOnly = false;
+        Navmanage.NavigateTo("/QRScan");
+    }
+    public void back()
+    {
+        Navmanage.NavigateTo("/sheetgrp");
+    }
+    public async void ModListView_ItemSelected(ClickEventArgs<DropDownLst> args)
+    {
+        Global.SelLogNo = args.Index + 1;
+        Navmanage.NavigateTo("/Parameter");
+    }
+}

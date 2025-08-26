@@ -52,6 +52,8 @@ namespace DLogBook.Shared
         public static string SLoginDate = string.Empty;
         public static string PtyName = string.Empty;
         public static string SheetId = string.Empty;
+        public static int ReadingCnt = 0;
+        public static int SelLogNo = 0;
         public static SQLConnStr MainDBConnStr = new()
         {
             AppType = "DLogBook",
