@@ -55,11 +55,9 @@
               
                 <SfSpinner Size="40" @bind-Visible="@VisibleProperty" Type="SpinnerType.Bootstrap5"></SfSpinner>
                 <SfListView DataSource="@ReadingMenu" class="report">
-                    <ListViewFieldSettings TValue="DropDownLst" Id="Id" Text="Name">
-                    </ListViewFieldSettings>
-                    <ListViewEvents TValue="DropDownLst" Clicked="ModListView_ItemSelected">
-                    </ListViewEvents>
-                     <ListViewTemplates TValue="DropDownLst">
+                    <ListViewFieldSettings TValue="DropDownLst" Id="Id" Text="Name"></ListViewFieldSettings>
+                    <ListViewEvents TValue="DropDownLst" Clicked="ModListView_ItemSelected"></ListViewEvents>
+                    <ListViewTemplates TValue="DropDownLst">
                         <Template>
                             <div class="container">
                                 <div class="row">
@@ -134,64 +132,92 @@
     SfDialog DialogRef;
     SfDialog TaskDialogRef;
     private bool VisibleProperty { get; set; } = false;
-    public List<DropDownLst> ReadingMenu = new();
+    private List<DropDownLst> ReadingMenu = new List<DropDownLst>();
     DropDownLst dropDownLst = new DropDownLst();
     private readonly DatabaseContext _context = new DatabaseContext();
     private IEnumerable<DevParamDet> Devparmadet;
+    IEnumerable<DevParamDet> Obj1;
     Expression<Func<DevParamDet, bool>> predicate;
+    List<string> TmpCnt = new();
     int EmptyPrmCnt;
     int TotPrmCnt = 0;
     protected override async Task OnInitializedAsync()
     {
-
-        for(int ictr = 0 ; ictr < Global.ReadingCnt ; ictr++)
-        {
-            dropDownLst = new DropDownLst
-            {
-                Id = "Log " + (ictr + 1).ToString(),
-                Name = "Log " + (ictr + 1).ToString()
-            };
-            ReadingMenu.Add(dropDownLst);
-        }
-        // if (Global.ReadingCnt > 0)
+        // for (int ictr = 0; ictr < Global.ReadingCnt; ictr++)
         // {
-        //     // for (int ictr = 0; ictr < Global.ReadingCnt; ictr++)
-        //     // {
-        //     //     //var tmp = Global.ReadingCnt[ictr];
-        //     //     predicate = user => (user.GrpName == Global.SheetGrp && user.Sheet == Global.Sheet && user.SubParam.Contains());
-        //     // }
-        // }
-        // else
-        // {
-        //     predicate = user => (user.GrpName == Global.SheetGrp && user.Sheet == Global.Sheet);
-        // }
-        // //Expression<Func<DevParamDet, bool>> predicare = user =>user.Sheet == Global.Sheet &&(user.QRCodePattern != "1" || !user.GrpName.Contains("MAIN QR"));
-        // Devparmadet = await _context.GetFileteredAsync(predicate);
-        // List<string> MenuLst2 = new List<string>();
-        // var GrpList = Devparmadet.DistinctBy(a => a.GrpName);
-        // foreach (var GrpName in GrpList)
-        // {
-        //     string ParamGrp = GrpName.GrpName.ToString();
-        //     var EmptyObj = Devparmadet.Where(a => a.GrpName == ParamGrp && string.IsNullOrEmpty(a.ParamData));
-        //     var AllObj = Devparmadet.Where(a => a.GrpName == ParamGrp);
-        //     string Calc = "";
-        //     TotPrmCnt = AllObj.Count();
-        //     EmptyPrmCnt = EmptyObj.Count();
-        //     int Tmp = 0;
-        //     if ((TotPrmCnt - EmptyPrmCnt) > 0)
-        //     {
-        //         Tmp = ((TotPrmCnt - EmptyPrmCnt) * 100) / TotPrmCnt;
-        //     }
-        //     Calc = Tmp.ToString();
         //     dropDownLst = new DropDownLst
         //     {
-        //         Id = ParamGrp,
-        //         Name = ParamGrp,
-        //         LognDesc = Calc//EmptyPrmCnt.ToString() + "/ " + TotPrmCnt.ToString()
-
+        //         Id = "Log " + (ictr + 1).ToString(),
+        //         Name = "Log " + (ictr + 1).ToString()
         //     };
-        //     SheetGrpList.Add(dropDownLst);
-        //}
+        //     ReadingMenu.Add(dropDownLst);
+        //     TmpCnt.Add("E" + (ictr + 1));
+        // }
+
+        for (int ictr = 0; ictr < Global.ReadingCnt; ictr++)
+        {
+            TmpCnt.Add("E" + (ictr + 1));
+        }
+        if (Global.ReadingCnt > 0) 
+        {
+            int ReadingCtr = 0;
+            foreach(var tmp in TmpCnt)
+            {
+                predicate = user => (user.GrpName == Global.SheetGrp && user.Sheet == Global.Sheet && user.SubParam.Contains(tmp));//
+                Devparmadet = await _context.GetFileteredAsync(predicate);
+                List<string> MenuLst2 = new List<string>();
+                //var ParList = Devparmadet.DistinctBy(a => a.SubParam);
+                var EmptyObj1 = Devparmadet.Where(a => a.GrpName == Global.SheetGrp && string.IsNullOrEmpty(a.ParamData));
+                var AllObj1 = Devparmadet.Where(a => a.GrpName == Global.SheetGrp);
+                TotPrmCnt = AllObj1.Count();
+                EmptyPrmCnt = EmptyObj1.Count();
+                int Tmp = 0;
+                if ((TotPrmCnt - EmptyPrmCnt) > 0)
+                {
+                    Tmp = ((TotPrmCnt - EmptyPrmCnt) * 100) / TotPrmCnt;
+                }
+                string Calc = Tmp.ToString();
+                string IdName = "";
+
+                if(tmp == "E1")
+                {
+                    Obj1 = Devparmadet.Where(a => a.QRCodePattern == "2");
+                    if (Obj1.Count() > 0)
+                    {
+                        IdName = "ASHTECH";
+                    }
+                }
+                else
+                {
+                    Obj1 = Devparmadet.Where(a => a.SubParam == "CUST_" + tmp + "_CUST" && a.QRCodePattern == "2");
+                    if (Obj1.Count() > 0)
+                    {
+                        foreach(DevParamDet devParam in Obj1)
+                        {
+                            IdName = (string.IsNullOrEmpty(devParam.ParamData) ? "" : devParam.ParamData);
+                        }
+                    }
+                    Obj1 = Devparmadet.Where(a => a.SubParam == "DIST_" + tmp + "_DIST" && a.QRCodePattern == "2");
+                    if (Obj1.Count() > 0)
+                    {
+                        foreach (DevParamDet devParam in Obj1)
+                        {
+                            IdName += (string.IsNullOrEmpty(devParam.ParamData) ? "" : "/"+devParam.ParamData);
+                        }
+                    }
+                }
+                //string IdName = "Log " + (ReadingCtr + 1).ToString();
+                dropDownLst = new DropDownLst
+                {
+                    Id = (string.IsNullOrEmpty(IdName) ? "Log " + (ReadingCtr + 1).ToString() : IdName.ToString()),
+                    Name = (string.IsNullOrEmpty(IdName) ? "Log " + (ReadingCtr + 1).ToString() : IdName.ToString()),
+                    LognDesc = Calc
+                };
+                ReadingMenu.Add(dropDownLst);
+                ReadingCtr++;
+            }
+        }
+        this.VisibleProperty = false;
     }
     public void LogOut()
     {

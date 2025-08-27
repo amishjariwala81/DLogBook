@@ -189,16 +189,16 @@
         Global.IsReadOnly = ((Global.UserName.ToLower().Trim() == "administrator") ? false : true);
         this.VisibleProperty = true;
 
-        //Expression<Func<DevParamDet, bool>> predicare = user => (user.Sheet == Global.Sheet);//&& (user.QRCodePattern=="1"? !user.GrpName.Contains("MainQR") :true)
-        Expression<Func<DevParamDet, bool>> predicare = user =>user.Sheet == Global.Sheet &&(user.QRCodePattern != "1" || !user.GrpName.Contains("MAIN QR"));
+        //Expression<Func<DevParamDet, bool>> predicare = user => (user.Sheet == Global.Sheet);
+        Expression<Func<DevParamDet, bool>> predicare = user => user.Sheet == Global.Sheet && (user.QRCodePattern != "1" || !user.GrpName.Contains("MAIN QR")) ;
         Devparmadet = await _context.GetFileteredAsync(predicare);
         List<string> MenuLst2 = new List<string>();
         var GrpList = Devparmadet.DistinctBy(a => a.GrpName);
         foreach( var GrpName in GrpList )
         {
             string ParamGrp = GrpName.GrpName.ToString();
-            var EmptyObj = Devparmadet.Where(a => a.GrpName == ParamGrp && string.IsNullOrEmpty(a.ParamData));
-            var AllObj = Devparmadet.Where(a => a.GrpName == ParamGrp);
+            var EmptyObj = Devparmadet.Where(a => a.GrpName == ParamGrp && string.IsNullOrEmpty(a.ParamData) && (!string.IsNullOrEmpty(a.Shift) && Global.Shift == a.Shift));
+            var AllObj = Devparmadet.Where(a => a.GrpName == ParamGrp && (!string.IsNullOrEmpty(a.Shift) && Global.Shift == a.Shift));
             string Calc = "";
             TotPrmCnt = AllObj.Count();
             EmptyPrmCnt = EmptyObj.Count();
