@@ -186,10 +186,11 @@
                     {
                         IdName = "ASHTECH";
                     }
+                    
                 }
                 else
                 {
-                    Obj1 = Devparmadet.Where(a => a.SubParam == "CUST_" + tmp + "_CUST" && a.QRCodePattern == "2");
+                    Obj1 = Devparmadet.Where(a => a.SubParam == "CUST_" + tmp + "_CUST" && a.QRCodePattern == "2");//
                     if (Obj1.Count() > 0)
                     {
                         foreach(DevParamDet devParam in Obj1)
@@ -197,7 +198,7 @@
                             IdName = (string.IsNullOrEmpty(devParam.ParamData) ? "" : devParam.ParamData);
                         }
                     }
-                    Obj1 = Devparmadet.Where(a => a.SubParam == "DIST_" + tmp + "_DIST" && a.QRCodePattern == "2");
+                    Obj1 = Devparmadet.Where(a => a.SubParam == "DIST_" + tmp + "_DIST" && a.QRCodePattern == "2");//
                     if (Obj1.Count() > 0)
                     {
                         foreach (DevParamDet devParam in Obj1)

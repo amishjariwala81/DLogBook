@@ -197,8 +197,8 @@
         foreach( var GrpName in GrpList )
         {
             string ParamGrp = GrpName.GrpName.ToString();
-            var EmptyObj = Devparmadet.Where(a => a.GrpName == ParamGrp && string.IsNullOrEmpty(a.ParamData) && (!string.IsNullOrEmpty(a.Shift) && Global.Shift == a.Shift));
-            var AllObj = Devparmadet.Where(a => a.GrpName == ParamGrp && (!string.IsNullOrEmpty(a.Shift) && Global.Shift == a.Shift));
+            var EmptyObj = Devparmadet.Where(a => a.GrpName == ParamGrp && string.IsNullOrEmpty(a.ParamData));// && (!string.IsNullOrEmpty(a.Shift) && Global.Shift == a.Shift)
+            var AllObj = Devparmadet.Where(a => a.GrpName == ParamGrp);//&& (!string.IsNullOrEmpty(a.Shift) && Global.Shift == a.Shift)
             string Calc = "";
             TotPrmCnt = AllObj.Count();
             EmptyPrmCnt = EmptyObj.Count();

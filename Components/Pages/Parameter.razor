@@ -291,12 +291,15 @@
 
             builder.OpenElement(renderctr++, "div");
             builder.AddAttribute(renderctr++, "Class", "param-field");
+            builder.OpenElement(renderctr++, "label");
+            builder.AddAttribute(renderctr++, "style", "font-size:12px;font-weight:bold");
+            builder.AddContent(renderctr++, Obj.PDispName);
             if (Obj.DataType == "D") // Date
             {
                 builder.OpenComponent(renderctr++, typeof(SfDatePicker<DateTime>));
                 builder.AddAttribute(renderctr++, "style", "text-align: left;");
                 builder.AddAttribute(renderctr++, "ID", "Test" + Ctr.ToString());
-                builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
+                //builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
                 builder.AddAttribute(renderctr++, "Readonly", Global.IsReadOnly);
                 builder.AddAttribute(renderctr++, "Value", Obj.DateVal);
                 // builder.AddAttribute(renderctr++, "ChildContent", (Microsoft.AspNetCore.Components.RenderFragment)((builder2) =>
@@ -322,8 +325,8 @@
                 builder.OpenComponent(renderctr++, typeof(SfTextBox));
                 builder.AddAttribute(renderctr++, "ID", "Test" + Ctr.ToString());
                 builder.AddAttribute(renderctr++, "style", "text-align: left;");
-                builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
-                builder.AddAttribute(renderctr++, "FloatLabelType", FloatLabelType.Always);
+                //builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
+               // builder.AddAttribute(renderctr++, "FloatLabelType", FloatLabelType.Always);
                 builder.AddAttribute(renderctr++, "Readonly", Global.IsReadOnly);
                 builder.AddAttribute(renderctr++, "Value", Obj.StrVal);
                 builder.AddAttribute(renderctr++, "ValueChange", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Syncfusion.Blazor.Inputs.ChangedEventArgs>(this, args =>
@@ -340,8 +343,8 @@
             {
                 builder.OpenComponent(renderctr++, typeof(SfTimePicker<TimeOnly>));
                 builder.AddAttribute(renderctr++, "ID", "Test" + Ctr.ToString());
-                builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
-                builder.AddAttribute(renderctr++, "FloatLabelType", FloatLabelType.Always);
+                //builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
+                //builder.AddAttribute(renderctr++, "FloatLabelType", FloatLabelType.Always);
                 builder.AddAttribute(renderctr++, "Value", Obj.TimeVal);
                 builder.AddAttribute(renderctr++, "Readonly", Global.IsReadOnly);
                 builder.AddAttribute(renderctr++, "Format", "HH:mm");
@@ -394,8 +397,8 @@
                 // builder.AddAttribute(renderctr++, "CssClass", "right");
                 builder.AddAttribute(renderctr++, "Type", InputType.Number);
                 //builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName + " " + Obj.Range);
-                builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
-                builder.AddAttribute(renderctr++, "FloatLabelType", FloatLabelType.Always);
+                //builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
+                //builder.AddAttribute(renderctr++, "FloatLabelType", FloatLabelType.Always);
                 builder.AddAttribute(renderctr++, "Readonly", Global.IsReadOnly);
                 if (double.Parse(Obj.MaxVal) + double.Parse(Obj.MinVal) != 0)
                 {
@@ -424,8 +427,8 @@
                 builder.OpenComponent(renderctr++, typeof(SfDropDownList<string, string>));
                 builder.AddAttribute(renderctr++, "style", "text-align: left;");
                 builder.AddAttribute(renderctr++, "ID", "Test" + Ctr.ToString());
-                builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
-                builder.AddAttribute(renderctr++, "FloatLabelType", FloatLabelType.Always);
+                //builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
+                //builder.AddAttribute(renderctr++, "FloatLabelType", FloatLabelType.Always);
                 builder.AddAttribute(renderctr++, "DataSource", List);
                 builder.AddAttribute(renderctr++, "Readonly", Global.IsReadOnly);
                 builder.AddAttribute(renderctr++, "ChildContent", (Microsoft.AspNetCore.Components.RenderFragment)((builder2) =>
@@ -445,6 +448,7 @@
                 builder.AddComponentReferenceCapture(renderctr++, inst => { Obj.DropdownCtrl = (SfDropDownList<string, string>)inst; });
                 builder.CloseComponent();
             }
+            builder.CloseElement();
             builder.CloseElement();
 
             /*DIV1 Complete*/
