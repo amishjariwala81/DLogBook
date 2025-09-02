@@ -71,6 +71,7 @@
     // public string ScanValue { get; set; } = "";
 
     private readonly DatabaseContext _context = new DatabaseContext();
+     List<string> ReadingCnt = new();
     protected override async Task OnInitializedAsync()
     {
         // ScanValue = "";
@@ -116,23 +117,67 @@
                     {
                         Global.SheetGrp = parts[1];
                     }
-
+                     ReadingCnt = new();
                     if (!string.IsNullOrEmpty(Global.Sheet) && !string.IsNullOrEmpty(Global.SheetGrp))
                     {
-                        Expression<Func<DevParamDet, bool>> predicare2 = GrpData => (GrpData.Sheet == Global.Sheet && ((GrpData.QRCodePattern == "1" && !GrpData.GrpName.Contains("MAIN QR")) || GrpData.GrpName == Global.SheetGrp));
+                        //Expression<Func<DevParamDet, bool>> predicare2 = GrpData => (GrpData.Sheet == Global.Sheet && ((GrpData.QRCodePattern == "1" && !GrpData.GrpName.Contains("MAIN QR")) || GrpData.GrpName == Global.SheetGrp));
+                        Expression<Func<DevParamDet, bool>> predicare2 = GrpData => (GrpData.Sheet == Global.Sheet && GrpData.GrpName == Global.SheetGrp);
                         var GrpNameData = await _context.GetFileteredAsync(predicare2);
                         int EmptyPrmCnt = GrpNameData.Count();
                         if (EmptyPrmCnt > 0)
                         {
-                            if (Global.SheetGrp.Contains("MAIN QR"))
+                            // if (Global.SheetGrp.Contains("MAIN QR"))
+                            // {
+                            //     Navmanage.NavigateTo("/sheetgrp", true);
+                            // }
+                            // else
+                            // {
+                            //     Navmanage.NavigateTo("/parameter", true);
+                            // }
+                            
+                            //Navmanage.NavigateTo("/parameter", true);
+                            /*KP 02/09/25*/
+                            foreach (var data in GrpNameData)
                             {
-                                Navmanage.NavigateTo("/sheetgrp", true);
+                                if ((!string.IsNullOrEmpty(data.Shift) && Global.Shift == data.Shift) || string.IsNullOrEmpty(data.Shift))
+                                {
+                                    if (data.SubParam.Contains("_E"))
+                                    {
+
+                                        List<string> Arr  = data.SubParam.Split("_").ToList();
+                                        foreach( string Tmp in Arr)
+                                        {
+                                            if(Tmp.StartsWith("E"))
+                                            {
+                                                string Tmp2 = Tmp.Substring(1);
+                                                if (Tmp2.All(char.IsDigit))
+                                                {
+                                                    ReadingCnt.Add(Tmp);
+                                                }
+                                                else
+                                                {
+                                                    break;
+                                                }
+                                            }
+
+                                        }
+                                    }
+
+                                }
+                            }
+                            var ReadingCnt1 = ReadingCnt.Distinct();
+                            if(ReadingCnt1.Count() > 0)
+                            {
+                                Global.ReadingCnt = ReadingCnt1.Count();
+                                Navmanage.NavigateTo("/readingcnt");
                             }
                             else
                             {
-                                Navmanage.NavigateTo("/parameter", true);
+                                Global.ReadingCnt = 0;
+                                Global.SelLogNo = 0;
+                                Navmanage.NavigateTo("/Parameter");
                             }
-//                            Navmanage.NavigateTo("/parameter", true);
+                            /*KP 02/09/25*/
                         }
                         else
                         {

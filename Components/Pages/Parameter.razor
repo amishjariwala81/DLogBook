@@ -171,6 +171,7 @@
     private readonly DatabaseContext _context = new DatabaseContext();
     private IEnumerable<DevParamDet> ParamDet;
     LogModel LogObj;
+    private List<LogModel> LogCtrl1 = new List<LogModel>();
     private List<LogModel> LogCtrl = new List<LogModel>();
     private RenderFragment DynamicRender { get; set; }
     bool Success;
@@ -221,7 +222,7 @@
         {
             GrpCond = user => (user.GrpName == Global.SheetGrp && user.Sheet == Global.Sheet);
         }
-        
+
 
         ParamDet = await _context.GetFileteredAsync(GrpCond);
         foreach (var data in ParamDet)
@@ -244,7 +245,8 @@
                 LogObj.DataType = data.DataType;
                 LogObj.PDispName = (!string.IsNullOrEmpty(data.PDispName) ? data.PDispName : data.SubParam);
                 LogObj.GDispName = data.GDispName;
-                LogObj.RowNo = data.RowNo;
+                LogObj.RowNo = (!string.IsNullOrEmpty(data.RowNo) ? int.Parse(data.RowNo) : 0);
+                LogObj.ColNo = (!string.IsNullOrEmpty(data.ColNo) ? int.Parse(data.ColNo) : 0);
                 LogObj.SNAME = data.SNAME;
                 LogObj.SSHIFT = data.SSHIFT;
                 LogObj.SDATE = data.SDATE;
@@ -252,9 +254,12 @@
                 LogObj.LogDate = data.LogDate;
                 LogObj.LogTime = data.LogTime;
                 LogObj.SheetId = data.SheetId;
-                LogCtrl.Add(LogObj);        
+                LogObj.QRCodePattern = (!string.IsNullOrEmpty(data.QRCodePattern) ? data.QRCodePattern : "0");
+                LogCtrl1.Add(LogObj);  
+
             }
         }
+        LogCtrl= LogCtrl1.OrderBy(item => item.ColNo).ThenBy(item => item.RowNo).ToList();
         this.VisibleProperty = false;
         DynamicRender = CreateComponent();
         StateHasChanged();
@@ -326,7 +331,7 @@
                 builder.AddAttribute(renderctr++, "ID", "Test" + Ctr.ToString());
                 builder.AddAttribute(renderctr++, "style", "text-align: left;");
                 //builder.AddAttribute(renderctr++, "Placeholder", Obj.PDispName);
-               // builder.AddAttribute(renderctr++, "FloatLabelType", FloatLabelType.Always);
+                // builder.AddAttribute(renderctr++, "FloatLabelType", FloatLabelType.Always);
                 builder.AddAttribute(renderctr++, "Readonly", Global.IsReadOnly);
                 builder.AddAttribute(renderctr++, "Value", Obj.StrVal);
                 builder.AddAttribute(renderctr++, "ValueChange", Microsoft.AspNetCore.Components.EventCallback.Factory.Create<Syncfusion.Blazor.Inputs.ChangedEventArgs>(this, args =>
@@ -716,7 +721,7 @@
                     FormatString += "color:#FF0000;";
                 }
             }
-            
+
             StyleAttributes = new Dictionary<string, object>()
             {
                 { "style", FormatString }
@@ -751,13 +756,15 @@
             ToSaveObj.DataType = model.DataType;
             ToSaveObj.PDispName = model.PDispName;
             ToSaveObj.GDispName = model.GDispName;
-            ToSaveObj.RowNo = model.RowNo;
+            ToSaveObj.RowNo = model.RowNo.ToString();
+            ToSaveObj.ColNo = model.ColNo.ToString();
             ToSaveObj.SNAME = model.SNAME;
             ToSaveObj.SSHIFT = model.SSHIFT;
             ToSaveObj.SDATE = model.SDATE;
             ToSaveObj.SUSER = model.SUSER;
             ToSaveObj.LogDate = model.LogDate;
             ToSaveObj.LogTime = model.LogTime;
+            ToSaveObj.QRCodePattern = model.QRCodePattern;
             // ToSaveObj.FormatStr = model.FormatStr;
             if (model.DataType == "C")
             {

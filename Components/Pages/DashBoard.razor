@@ -736,13 +736,13 @@
                             {
                                 Query = "Select d.Sheet, b.GrpName, a.SubParam, a.SubDetId, a.Shift, a.Unit, b.Range, b.MinVal, b.MaxVal, b.FixVal, " +
                                         " a.Value as ParamData, a.DataType, d.Operator, a.GenName as PDispName, b.GenGrpNm as GDispName, d.MenuId," +
-                                        " RIGHT('000' + ltrim(rTrim( str(b.RowNo) )), 4) as RowNo, '' as SNAME, '' as SSHIFT, '' as SDATE, '' as SUSER, '' as LogDate, '' as LogTime, isnull(d.QRCodePattern,0) as QRCodePattern " +
+                                        " /*RIGHT('000' + ltrim(rTrim( str(b.RowNo) )), 4)*/a.RowNo as RowNo, a.ColNo, '' as SNAME, '' as SSHIFT, '' as SDATE, '' as SUSER, '' as LogDate, '' as LogTime, isnull(d.QRCodePattern,0) as QRCodePattern " +
                                         " from DevParamSubDet a" +
                                         " left join DEVPARAMDET b on b.DetId = a.DetId " +
                                         " left join DEVPARAMMST c on c.MstId = b.MstId " +
                                         " left join MENUMST d on d.MenuId = c.MenuId " +
                                         " where a.Deleted <> 'Y' and isnull( d.Sheet, '' ) <> '' " + 
-                                        " Order by d.MenuId, b.SrOrd, b.RowNo, a.Sr ",
+                                        " Order by d.MenuId, a.RowNo, a.ColNo, a.Sr ",
                                 SQLConnStr = Global.PtyDBConnStr
                             };
                             json = JsonConvert.SerializeObject(oTblData);
@@ -781,6 +781,7 @@
                                         ParamLst.PDispName = Row["PDispName"].ToString().Trim();
                                         ParamLst.GDispName = Row["GDispName"].ToString().Trim();
                                         ParamLst.RowNo = Row["RowNo"].ToString().Trim();
+                                        ParamLst.ColNo = Row["ColNo"].ToString().Trim();
                                         ParamLst.SNAME = Row["SNAME"].ToString().Trim();
                                         ParamLst.SSHIFT = Row["SSHIFT"].ToString().Trim();
                                         ParamLst.SDATE = Row["SDATE"].ToString().Trim();

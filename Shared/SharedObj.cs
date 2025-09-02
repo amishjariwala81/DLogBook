@@ -23,7 +23,7 @@ namespace DLogBook.Shared
 #if DEBUG
        // public static string APIURL = " http://localhost:55555/api";
         //"http://192.168.1.6:44333/api"; 
-       // public static string APIURL = "http://192.168.1.66:44333/api";
+        //public static string APIURL = "http://192.168.1.66:44333/api";
        public static string APIURL = "http://115.96.27.178:44333/api";
 #else
         public static string APIURL = "http://115.96.27.178:44333/api";
@@ -107,6 +107,7 @@ namespace DLogBook.Shared
         public string? PDispName { get; set; }
         public string? GDispName { get; set; }
         public string? RowNo { get; set; }
+        public string? ColNo { get; set; }
         public string? SNAME { get; set; }
         public string? SSHIFT { get; set; }
         public string? SDATE { get; set; }
@@ -136,7 +137,8 @@ namespace DLogBook.Shared
         public string? Operator { get; set; }
         public string? PDispName { get; set; }
         public string? GDispName { get; set; }
-        public string? RowNo { get; set; }
+        public int RowNo { get; set; }
+        public int ColNo { get; set; }
         public string? SNAME { get; set; }
         public string? SSHIFT { get; set; }
         public string? SDATE { get; set; }
@@ -184,7 +186,7 @@ namespace DLogBook.Shared
         public string LogLabel = string.Empty;
         public bool LogShow { get; set; } = true;
         public bool OptionShow { get; set; } = true;
-
+        public string QRCodePattern { get; set; } = string.Empty;
         public string SheetId { get; set; } = string.Empty;
     }
 
