@@ -23,8 +23,8 @@ namespace DLogBook.Shared
 #if DEBUG
        // public static string APIURL = " http://localhost:55555/api";
         //"http://192.168.1.6:44333/api"; 
-        //public static string APIURL = "http://192.168.1.66:44333/api";
-       public static string APIURL = "http://115.96.27.178:44333/api";
+        public static string APIURL = "http://192.168.1.66:44333/api";
+      // public static string APIURL = "http://115.96.27.178:44333/api";
 #else
         public static string APIURL = "http://115.96.27.178:44333/api";
 #endif
@@ -34,7 +34,7 @@ namespace DLogBook.Shared
         public static string Sheet = String.Empty;
         public static string Shift = String.Empty;
         public static string SheetGrp = String.Empty;
-        public static string AppVersion = "1.0.4";
+        public static string AppVersion = "1.0.6";
         public static string RPtyName = String.Empty;
         public static bool lDetUserActLog = false;
         public static string QueryCond = string.Empty;
