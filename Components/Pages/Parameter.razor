@@ -255,11 +255,31 @@
                 LogObj.LogTime = data.LogTime;
                 LogObj.SheetId = data.SheetId;
                 LogObj.QRCodePattern = (!string.IsNullOrEmpty(data.QRCodePattern) ? data.QRCodePattern : "0");
+                //LogObj.DevParOrd = (!string.IsNullOrEmpty(data.DevParOrd) ? data.DevParOrd : "");
                 LogCtrl1.Add(LogObj);  
 
             }
         }
-        LogCtrl= LogCtrl1.OrderBy(item => item.ColNo).ThenBy(item => item.RowNo).ToList();
+        //KP 10/11/25 change Row - Col wise Order by Default Col-Row Wise
+        var SheetData = await _context.GetAllAsync<SheetDet>();
+        var DevParOrdby = SheetData.FirstOrDefault(x => x.Sheet == Global.Sheet);
+        if (DevParOrdby != null)
+        {
+            if (DevParOrdby.DevParOrd == "RC")
+            {
+                LogCtrl = LogCtrl1.OrderBy(item => item.RowNo).ThenBy(item => item.ColNo).ToList();
+            }
+            else
+            {
+                LogCtrl = LogCtrl1.OrderBy(item => item.ColNo).ThenBy(item => item.RowNo).ToList();
+            }
+        }
+        else
+        {
+            LogCtrl = LogCtrl1.OrderBy(item => item.ColNo).ThenBy(item => item.RowNo).ToList();
+        }
+        
+        
         this.VisibleProperty = false;
         DynamicRender = CreateComponent();
         StateHasChanged();

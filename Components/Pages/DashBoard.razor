@@ -295,6 +295,7 @@
     private IEnumerable<DevParamDet> Devparmadet;
     private IEnumerable<DevParamDet> Devparmadet_filer;    
     private List<DropDownLst> SheetGrpList = new List<DropDownLst>();    
+    private List<DropDownLst> SheetGrpList1 = new List<DropDownLst>();
     DropDownLst dropDownLst = new DropDownLst();
     SfDialog DialogRef;
     private string HideBtn = string.Empty;
@@ -446,7 +447,7 @@
                         Name = data.Sheet,
                         LognDesc = Calc//EmptyPrmCnt.ToString() + "/ " + TotPrmCnt.ToString()
                     };
-                    SheetGrpList.Add(dropDownLst);
+                    SheetGrpList1.Add(dropDownLst);
                 }
             }
             else
@@ -489,10 +490,14 @@
                     //     Name = data.Sheet,
                     //     LognDesc = EmptyPrmCnt.ToString() + "/ " + TotPrmCnt.ToString()
                     // };
-                    SheetGrpList.Add(dropDownLst);
+                    SheetGrpList1.Add(dropDownLst);
                 }
             }
-
+            if(SheetGrpList1.Count > 0)
+            {
+                SheetGrpList = SheetGrpList1.OrderBy(x => x.Name).ToList();
+            }
+            
             if (SheetLst.Count == 0)
             {
                 if (Global.UserName.ToLower().Trim() == "jsadmin" || Global.UserName.ToLower().Trim() == "administrator")
@@ -699,7 +704,7 @@
 
                     oTblData = new GetTableData
                     {
-                        Query = " select sheet, MenuId from MenuMst Where FldBook = 'Y' Order by MenuId ",
+                        Query = " select sheet, MenuId, isnull(DevParOrd,'') as DevParOrd from MenuMst Where FldBook = 'Y' Order by MenuId ",
                         SQLConnStr = Global.PtyDBConnStr
                     };
                     json = JsonConvert.SerializeObject(oTblData);
@@ -725,6 +730,7 @@
                                 SheetLst.Sheet = Row["Sheet"].ToString().Trim();
                                 //SheetLst.Id = Cnt++;
                                 SheetLst.Id = Convert.ToInt32(Row["MenuId"].ToString());
+                                SheetLst.DevParOrd = Row["DevParOrd"].ToString().Trim();
                                 await _context.AddItemAsync<SheetDet>(SheetLst);
                             }
                             await sfDialogService.AlertAsync("Sheet details imported successfully.", CoreVars.APPMANAGER);
@@ -735,7 +741,8 @@
                             {
                                 Query = "Select d.Sheet, b.GrpName, a.SubParam, a.SubDetId, a.Shift, a.Unit, b.Range, b.MinVal, b.MaxVal, b.FixVal, " +
                                         " a.Value as ParamData, a.DataType, d.Operator, a.GenName as PDispName, b.GenGrpNm as GDispName, d.MenuId," +
-                                        " /*RIGHT('000' + ltrim(rTrim( str(b.RowNo) )), 4)*/a.RowNo as RowNo, a.ColNo, '' as SNAME, '' as SSHIFT, '' as SDATE, '' as SUSER, '' as LogDate, '' as LogTime, isnull(d.QRCodePattern,0) as QRCodePattern " +
+                                        " /*RIGHT('000' + ltrim(rTrim( str(b.RowNo) )), 4)*/a.RowNo as RowNo, a.ColNo, '' as SNAME, '' as SSHIFT, '' as SDATE, '' as SUSER, "+
+                                        " '' as LogDate, '' as LogTime, isnull(d.QRCodePattern,0) as QRCodePattern " +
                                         " from DevParamSubDet a" +
                                         " left join DEVPARAMDET b on b.DetId = a.DetId " +
                                         " left join DEVPARAMMST c on c.MstId = b.MstId " +
@@ -790,6 +797,7 @@
                                         ParamLst.Id = int.Parse(Row["SubDetId"].ToString().Trim());
                                         ParamLst.SheetId = Row["MenuId"].ToString().Trim();
                                         ParamLst.QRCodePattern = Row["QRCodePattern"].ToString();
+                                        //ParamLst.DevParOrd = Row["DevParOrd"].ToString();
                                         await _context.AddItemAsync<DevParamDet>(ParamLst);
 
                                     }
